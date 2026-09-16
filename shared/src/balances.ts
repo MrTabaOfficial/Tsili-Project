@@ -1,25 +1,25 @@
 import { MoneyError, assertTetri, compareIds, sumTetri, type MemberId, type Tetri } from "./money.js";
 import type { Shares } from "./split.js";
 
-export interface Expense {
+/** The slice of a domain Expense that balances need. Pass live records only; soft-deleted ones must be filtered out first. */
+export interface BalanceExpense {
   id: string;
-  payerId: MemberId;
+  payerMemberId: MemberId;
   amount: Tetri;
-  /** Resolved shares are stored with the expense so history never shifts if the split rule changes later. */
   shares: Shares;
 }
 
-export interface Repayment {
+export interface BalanceRepayment {
   id: string;
-  fromId: MemberId;
-  toId: MemberId;
+  fromMemberId: MemberId;
+  toMemberId: MemberId;
   amount: Tetri;
 }
 
 /** Signed tetri per member. Positive: the group owes them. Negative: they owe the group. */
 export type Balances = Record<MemberId, number>;
 
-export function computeBalances(memberIds: MemberId[], expenses: Expense[], repayments: Repayment[]): Balances {
+export function computeBalances(memberIds: MemberId[], expenses: BalanceExpense[], repayments: BalanceRepayment[]): Balances {
   const balances: Balances = {};
   for (const id of [...memberIds].sort(compareIds)) balances[id] = 0;
 
@@ -34,8 +34,8 @@ export function computeBalances(memberIds: MemberId[], expenses: Expense[], repa
     if (shareTotal !== e.amount) {
       throw new MoneyError("UNBALANCED", `expense ${e.id} shares sum to ${shareTotal}, expected ${e.amount}`);
     }
-    known(e.payerId, `expense ${e.id} payer`);
-    balances[e.payerId]! += e.amount;
+    known(e.payerMemberId, `expense ${e.id} payer`);
+    balances[e.payerMemberId]! += e.amount;
     for (const [id, share] of Object.entries(e.shares)) {
       known(id, `expense ${e.id} share`);
       balances[id]! -= share;
@@ -44,13 +44,13 @@ export function computeBalances(memberIds: MemberId[], expenses: Expense[], repa
 
   for (const r of repayments) {
     assertTetri(r.amount, `repayment ${r.id} amount`);
-    if (r.fromId === r.toId) {
+    if (r.fromMemberId === r.toMemberId) {
       throw new MoneyError("SELF_REPAYMENT", `repayment ${r.id} pays a member back to themselves`);
     }
-    known(r.fromId, `repayment ${r.id} payer`);
-    known(r.toId, `repayment ${r.id} recipient`);
-    balances[r.fromId]! += r.amount;
-    balances[r.toId]! -= r.amount;
+    known(r.fromMemberId, `repayment ${r.id} payer`);
+    known(r.toMemberId, `repayment ${r.id} recipient`);
+    balances[r.fromMemberId]! += r.amount;
+    balances[r.toMemberId]! -= r.amount;
   }
 
   return balances;
