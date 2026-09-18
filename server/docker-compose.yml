@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: tsili-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tsili
+      POSTGRES_PASSWORD: tsili
+      POSTGRES_DB: tsili
+    ports:
+      - "5432:5432"
+    volumes:
+      - tsili-pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tsili -d tsili"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  tsili-pgdata:

@@ -13,3 +13,6 @@ Thumbs.db
 .expo-shared/
 app/android/
 app/ios/
+
+# Prisma generated client
+server/src/generated/

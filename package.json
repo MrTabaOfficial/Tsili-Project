@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "test": "npm test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "postinstall": "npm run db:generate -w server"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

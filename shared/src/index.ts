@@ -26,3 +26,16 @@ export {
 } from "./domain.js";
 export type { Currency, SyncedRecord, Group, Member, Expense, Repayment } from "./domain.js";
 export { formatTetri, parseTetri } from "./format.js";
+export {
+  emailSchema,
+  passwordSchema,
+  displayNameSchema,
+  registerRequestSchema,
+  loginRequestSchema,
+  refreshRequestSchema,
+  publicUserSchema,
+  tokenPairSchema,
+  authResponseSchema,
+  apiErrorSchema,
+} from "./api.js";
+export type { RegisterRequest, LoginRequest, RefreshRequest, PublicUser, TokenPair, AuthResponse, ApiError } from "./api.js";
