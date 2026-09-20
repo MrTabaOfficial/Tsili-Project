@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../app.js";
 import { createDb, type Db } from "../db.js";
 import { loadEnv } from "../env.js";
+import { resetDb } from "../../test/reset-db.js";
 import { hashRefreshToken } from "./tokens.js";
 
 let db: Db;
@@ -21,7 +22,7 @@ beforeAll(() => {
 
 beforeEach(async () => {
   clock = new Date();
-  await db.$executeRawUnsafe('TRUNCATE TABLE "RefreshToken", "User" CASCADE');
+  await resetDb(db);
 });
 
 afterAll(async () => {

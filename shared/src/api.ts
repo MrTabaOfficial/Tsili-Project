@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { idSchema, isoDateTimeSchema } from "./domain.js";
+import { currencySchema, groupSchema, idSchema, inviteCodeSchema, isoDateTimeSchema, memberSchema } from "./domain.js";
 
 /** Auth request bodies, shared so the app's forms and the server enforce identical rules. */
 export const emailSchema = z.string().trim().toLowerCase().max(254).pipe(z.email());
@@ -50,3 +50,50 @@ export const apiErrorSchema = z.object({
   }),
 });
 export type ApiError = z.infer<typeof apiErrorSchema>;
+
+/** Groups and membership. The client may pass its own uuid so offline-created rows keep their id. */
+export const createGroupRequestSchema = z.object({
+  id: idSchema.optional(),
+  name: z.string().trim().min(1).max(80),
+  currency: currencySchema.default("GEL"),
+});
+export type CreateGroupRequest = z.infer<typeof createGroupRequestSchema>;
+
+export const updateGroupRequestSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+});
+export type UpdateGroupRequest = z.infer<typeof updateGroupRequestSchema>;
+
+export const createMemberRequestSchema = z.object({
+  id: idSchema.optional(),
+  name: z.string().trim().min(1).max(60),
+});
+export type CreateMemberRequest = z.infer<typeof createMemberRequestSchema>;
+
+export const updateMemberRequestSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+});
+export type UpdateMemberRequest = z.infer<typeof updateMemberRequestSchema>;
+
+export const inviteCodeParamSchema = z.object({ code: inviteCodeSchema });
+
+/** Join by claiming an existing unclaimed member, or by adding yourself under a new name. */
+export const joinGroupRequestSchema = z.union([
+  z.object({ memberId: idSchema }),
+  z.object({ name: z.string().trim().min(1).max(60) }),
+]);
+export type JoinGroupRequest = z.infer<typeof joinGroupRequestSchema>;
+
+export const groupWithMembersSchema = z.object({
+  group: groupSchema,
+  members: z.array(memberSchema),
+});
+export type GroupWithMembers = z.infer<typeof groupWithMembersSchema>;
+
+export const invitePreviewSchema = z.object({
+  group: groupSchema.pick({ id: true, name: true, currency: true }),
+  unclaimedMembers: z.array(memberSchema.pick({ id: true, name: true })),
+  /** Set when the caller is already a member, so the app can skip straight to the group. */
+  alreadyMemberId: idSchema.nullable(),
+});
+export type InvitePreview = z.infer<typeof invitePreviewSchema>;

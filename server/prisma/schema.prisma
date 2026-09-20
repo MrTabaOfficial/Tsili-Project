@@ -16,6 +16,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   refreshTokens RefreshToken[]
+  members       Member[]
 }
 
 /// One row per issued refresh token. Only the SHA-256 hash is stored, so a
@@ -34,4 +35,33 @@ model RefreshToken {
 
   @@index([userId])
   @@index([familyId])
+}
+
+model Group {
+  id         String    @id @default(uuid()) @db.Uuid
+  name       String
+  currency   String
+  inviteCode String    @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  members Member[]
+}
+
+/// A person in a group. userId stays null until an account joins by invite and claims the slot.
+model Member {
+  id        String    @id @default(uuid()) @db.Uuid
+  groupId   String    @db.Uuid
+  name      String
+  userId    String?   @db.Uuid
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([groupId, userId])
+  @@index([userId])
 }

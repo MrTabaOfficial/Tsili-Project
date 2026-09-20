@@ -39,3 +39,22 @@ export {
   apiErrorSchema,
 } from "./api.js";
 export type { RegisterRequest, LoginRequest, RefreshRequest, PublicUser, TokenPair, AuthResponse, ApiError } from "./api.js";
+export {
+  createGroupRequestSchema,
+  updateGroupRequestSchema,
+  createMemberRequestSchema,
+  updateMemberRequestSchema,
+  inviteCodeParamSchema,
+  joinGroupRequestSchema,
+  groupWithMembersSchema,
+  invitePreviewSchema,
+} from "./api.js";
+export type {
+  CreateGroupRequest,
+  UpdateGroupRequest,
+  CreateMemberRequest,
+  UpdateMemberRequest,
+  JoinGroupRequest,
+  GroupWithMembers,
+  InvitePreview,
+} from "./api.js";
