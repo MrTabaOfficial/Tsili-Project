@@ -46,7 +46,9 @@ model Group {
   updatedAt  DateTime  @updatedAt
   deletedAt  DateTime?
 
-  members Member[]
+  members    Member[]
+  expenses   Expense[]
+  repayments Repayment[]
 }
 
 /// A person in a group. userId stays null until an account joins by invite and claims the slot.
@@ -59,9 +61,57 @@ model Member {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user  User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  /// Assigned from the global sync_seq sequence on every write; the sync cursor is the highest value a client has seen.
+  serverSeq BigInt    @default(dbgenerated("nextval('sync_seq'::regclass)"))
+
+  group          Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  expensesPaid   Expense[]
+  repaymentsFrom Repayment[] @relation("RepaymentFrom")
+  repaymentsTo   Repayment[] @relation("RepaymentTo")
 
   @@unique([groupId, userId])
   @@index([userId])
+  @@index([groupId, serverSeq])
+}
+
+/// Client-owned record: id and timestamps come from the phone that created it; the server only validates and orders.
+model Expense {
+  id            String    @id @db.Uuid
+  groupId       String    @db.Uuid
+  payerMemberId String    @db.Uuid
+  amount        BigInt
+  description   String
+  date          String    @db.VarChar(10)
+  splitRule     Json
+  shares        Json
+  createdAt     DateTime
+  updatedAt     DateTime
+  deletedAt     DateTime?
+  serverSeq     BigInt    @default(dbgenerated("nextval('sync_seq'::regclass)"))
+
+  group Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  payer Member @relation(fields: [payerMemberId], references: [id])
+
+  @@index([groupId, serverSeq])
+}
+
+model Repayment {
+  id           String    @id @db.Uuid
+  groupId      String    @db.Uuid
+  fromMemberId String    @db.Uuid
+  toMemberId   String    @db.Uuid
+  amount       BigInt
+  date         String    @db.VarChar(10)
+  note         String?
+  createdAt    DateTime
+  updatedAt    DateTime
+  deletedAt    DateTime?
+  serverSeq    BigInt    @default(dbgenerated("nextval('sync_seq'::regclass)"))
+
+  group Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  from  Member @relation("RepaymentFrom", fields: [fromMemberId], references: [id])
+  to    Member @relation("RepaymentTo", fields: [toMemberId], references: [id])
+
+  @@index([groupId, serverSeq])
 }

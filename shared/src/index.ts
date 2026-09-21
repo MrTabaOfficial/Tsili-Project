@@ -58,3 +58,5 @@ export type {
   GroupWithMembers,
   InvitePreview,
 } from "./api.js";
+export { syncCursorSchema, syncRequestSchema, syncRecordKindSchema, syncRejectionSchema, syncResponseSchema } from "./api.js";
+export type { SyncRequest, SyncRecordKind, SyncRejection, SyncResponse } from "./api.js";

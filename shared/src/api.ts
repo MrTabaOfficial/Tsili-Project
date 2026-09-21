@@ -1,5 +1,14 @@
 import { z } from "zod";
-import { currencySchema, groupSchema, idSchema, inviteCodeSchema, isoDateTimeSchema, memberSchema } from "./domain.js";
+import {
+  currencySchema,
+  expenseSchema,
+  groupSchema,
+  idSchema,
+  inviteCodeSchema,
+  isoDateTimeSchema,
+  memberSchema,
+  repaymentSchema,
+} from "./domain.js";
 
 /** Auth request bodies, shared so the app's forms and the server enforce identical rules. */
 export const emailSchema = z.string().trim().toLowerCase().max(254).pipe(z.email());
@@ -97,3 +106,40 @@ export const invitePreviewSchema = z.object({
   alreadyMemberId: idSchema.nullable(),
 });
 export type InvitePreview = z.infer<typeof invitePreviewSchema>;
+
+/** Sync. Pushed records are validated one by one on the server, so they arrive untyped here. */
+export const syncCursorSchema = z.string().regex(/^\d+$/, "cursor must be a non-negative integer string");
+
+export const syncRequestSchema = z.object({
+  cursor: syncCursorSchema,
+  changes: z
+    .object({
+      members: z.array(z.unknown()).max(1000).default([]),
+      expenses: z.array(z.unknown()).max(1000).default([]),
+      repayments: z.array(z.unknown()).max(1000).default([]),
+    })
+    .default({ members: [], expenses: [], repayments: [] }),
+});
+export type SyncRequest = z.infer<typeof syncRequestSchema>;
+
+export const syncRecordKindSchema = z.enum(["member", "expense", "repayment"]);
+export type SyncRecordKind = z.infer<typeof syncRecordKindSchema>;
+
+export const syncRejectionSchema = z.object({
+  kind: syncRecordKindSchema,
+  id: z.string().nullable(),
+  code: z.string(),
+  message: z.string(),
+});
+export type SyncRejection = z.infer<typeof syncRejectionSchema>;
+
+export const syncResponseSchema = z.object({
+  cursor: syncCursorSchema,
+  changes: z.object({
+    members: z.array(memberSchema),
+    expenses: z.array(expenseSchema),
+    repayments: z.array(repaymentSchema),
+  }),
+  rejected: z.array(syncRejectionSchema),
+});
+export type SyncResponse = z.infer<typeof syncResponseSchema>;

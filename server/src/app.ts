@@ -11,6 +11,8 @@ import type { Env } from "./env.js";
 import { errorHandler, notFoundHandler } from "./errors.js";
 import { groupsRouter } from "./groups/routes.js";
 import { GroupService } from "./groups/service.js";
+import { syncRouter } from "./sync/routes.js";
+import { SyncService } from "./sync/service.js";
 
 export interface AppDeps {
   env: Env;
@@ -23,6 +25,7 @@ export function createApp({ env, db, logger, now }: AppDeps): Express {
   const tokens = tokenConfig(env.JWT_SECRET, env.ACCESS_TOKEN_TTL_SECONDS);
   const auth = new AuthService({ db, tokens, refreshTtlDays: env.REFRESH_TOKEN_TTL_DAYS, ...(now ? { now } : {}) });
   const groups = new GroupService(db, now);
+  const sync = new SyncService(db, now);
 
   const app = express();
   app.disable("x-powered-by");
@@ -36,6 +39,7 @@ export function createApp({ env, db, logger, now }: AppDeps): Express {
   });
   app.use(authRouter(auth, tokens));
   app.use(groupsRouter(groups, tokens));
+  app.use(syncRouter(sync, tokens));
 
   app.use(notFoundHandler);
   app.use(errorHandler(logger));

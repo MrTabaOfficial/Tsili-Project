@@ -11,8 +11,10 @@ import type {
 } from "@tsili/shared";
 import type { Db } from "../db.js";
 import { HttpError } from "../errors.js";
+import { nextServerSeq } from "../sync/seq.js";
 import { generateInviteCode } from "./invite.js";
 import { toGroup, toMember } from "./mappers.js";
+import { requireMembership } from "./membership.js";
 
 const INVITE_CODE_ATTEMPTS = 5;
 const UNIQUE_VIOLATION = "P2002";
@@ -58,23 +60,23 @@ export class GroupService {
   }
 
   async get(userId: string, groupId: string): Promise<GroupWithMembers> {
-    await this.requireMembership(userId, groupId);
+    await requireMembership(this.db, userId, groupId);
     return this.load(groupId);
   }
 
   async update(userId: string, groupId: string, input: UpdateGroupRequest): Promise<GroupWithMembers> {
-    await this.requireMembership(userId, groupId);
+    await requireMembership(this.db, userId, groupId);
     await this.db.group.update({ where: { id: groupId }, data: { name: input.name } });
     return this.load(groupId);
   }
 
   async softDelete(userId: string, groupId: string): Promise<void> {
-    await this.requireMembership(userId, groupId);
+    await requireMembership(this.db, userId, groupId);
     await this.db.group.update({ where: { id: groupId }, data: { deletedAt: this.now() } });
   }
 
   async addMember(userId: string, groupId: string, input: CreateMemberRequest): Promise<Member> {
-    await this.requireMembership(userId, groupId);
+    await requireMembership(this.db, userId, groupId);
     if (input.id && (await this.db.member.findUnique({ where: { id: input.id }, select: { id: true } }))) {
       throw new HttpError(409, "MEMBER_EXISTS", "a member with this id already exists");
     }
@@ -83,19 +85,25 @@ export class GroupService {
   }
 
   async updateMember(userId: string, groupId: string, memberId: string, input: UpdateMemberRequest): Promise<Member> {
-    await this.requireMembership(userId, groupId);
+    await requireMembership(this.db, userId, groupId);
     await this.requireLiveMember(groupId, memberId);
-    const row = await this.db.member.update({ where: { id: memberId }, data: { name: input.name } });
+    const row = await this.db.member.update({
+      where: { id: memberId },
+      data: { name: input.name, serverSeq: await nextServerSeq(this.db) },
+    });
     return toMember(row);
   }
 
   async removeMember(userId: string, groupId: string, memberId: string): Promise<void> {
-    await this.requireMembership(userId, groupId);
+    await requireMembership(this.db, userId, groupId);
     const target = await this.requireLiveMember(groupId, memberId);
     if (target.userId && target.userId !== userId) {
       throw new HttpError(403, "MEMBER_CLAIMED", "cannot remove a member who has joined with their own account");
     }
-    await this.db.member.update({ where: { id: memberId }, data: { deletedAt: this.now() } });
+    await this.db.member.update({
+      where: { id: memberId },
+      data: { deletedAt: this.now(), serverSeq: await nextServerSeq(this.db) },
+    });
   }
 
   async previewInvite(userId: string, code: string): Promise<InvitePreview> {
@@ -116,7 +124,7 @@ export class GroupService {
     if ("memberId" in input) {
       const slot = await this.requireLiveMember(group.id, input.memberId);
       if (slot.userId) throw new HttpError(409, "MEMBER_CLAIMED", "that member has already been claimed");
-      await this.db.member.update({ where: { id: slot.id }, data: { userId } });
+      await this.db.member.update({ where: { id: slot.id }, data: { userId, serverSeq: await nextServerSeq(this.db) } });
     } else {
       await this.db.member.create({ data: { id: randomUUID(), groupId: group.id, name: input.name, userId } });
     }
@@ -129,15 +137,6 @@ export class GroupService {
       include: { members: { where: { deletedAt: null }, orderBy: { createdAt: "asc" } } },
     });
     return { group: toGroup(group), members: group.members.map(toMember) };
-  }
-
-  /** Non-members get the same 404 as a missing group, so ids cannot be probed. */
-  private async requireMembership(userId: string, groupId: string): Promise<void> {
-    const member = await this.db.member.findFirst({
-      where: { groupId, userId, deletedAt: null, group: { deletedAt: null } },
-      select: { id: true },
-    });
-    if (!member) throw new HttpError(404, "GROUP_NOT_FOUND", "group not found");
   }
 
   private async requireLiveMember(groupId: string, memberId: string) {
