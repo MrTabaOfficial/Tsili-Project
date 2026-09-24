@@ -1,11 +1,11 @@
-export { MoneyError, assertTetri, compareIds, sumTetri } from "./money.js";
-export type { Tetri, MemberId, MoneyErrorCode } from "./money.js";
-export { split, splitEqually, splitExact, splitByShares } from "./split.js";
-export type { Shares, SplitRule } from "./split.js";
-export { computeBalances } from "./balances.js";
-export type { BalanceExpense, BalanceRepayment, Balances } from "./balances.js";
-export { settleUp } from "./settle.js";
-export type { Payment } from "./settle.js";
+export { MoneyError, assertTetri, compareIds, sumTetri } from "./money";
+export type { Tetri, MemberId, MoneyErrorCode } from "./money";
+export { split, splitEqually, splitExact, splitByShares } from "./split";
+export type { Shares, SplitRule } from "./split";
+export { computeBalances } from "./balances";
+export type { BalanceExpense, BalanceRepayment, Balances } from "./balances";
+export { settleUp } from "./settle";
+export type { Payment } from "./settle";
 export {
   CURRENCIES,
   INVITE_CODE_ALPHABET,
@@ -23,9 +23,9 @@ export {
   splitRuleSchema,
   expenseSchema,
   repaymentSchema,
-} from "./domain.js";
-export type { Currency, SyncedRecord, Group, Member, Expense, Repayment } from "./domain.js";
-export { formatTetri, parseTetri } from "./format.js";
+} from "./domain";
+export type { Currency, SyncedRecord, Group, Member, Expense, Repayment } from "./domain";
+export { formatTetri, parseTetri } from "./format";
 export {
   emailSchema,
   passwordSchema,
@@ -37,8 +37,8 @@ export {
   tokenPairSchema,
   authResponseSchema,
   apiErrorSchema,
-} from "./api.js";
-export type { RegisterRequest, LoginRequest, RefreshRequest, PublicUser, TokenPair, AuthResponse, ApiError } from "./api.js";
+} from "./api";
+export type { RegisterRequest, LoginRequest, RefreshRequest, PublicUser, TokenPair, AuthResponse, ApiError } from "./api";
 export {
   createGroupRequestSchema,
   updateGroupRequestSchema,
@@ -48,7 +48,7 @@ export {
   joinGroupRequestSchema,
   groupWithMembersSchema,
   invitePreviewSchema,
-} from "./api.js";
+} from "./api";
 export type {
   CreateGroupRequest,
   UpdateGroupRequest,
@@ -57,6 +57,6 @@ export type {
   JoinGroupRequest,
   GroupWithMembers,
   InvitePreview,
-} from "./api.js";
-export { syncCursorSchema, syncRequestSchema, syncRecordKindSchema, syncRejectionSchema, syncResponseSchema } from "./api.js";
-export type { SyncRequest, SyncRecordKind, SyncRejection, SyncResponse } from "./api.js";
+} from "./api";
+export { syncCursorSchema, syncRequestSchema, syncRecordKindSchema, syncRejectionSchema, syncResponseSchema } from "./api";
+export type { SyncRequest, SyncRecordKind, SyncRejection, SyncResponse } from "./api";

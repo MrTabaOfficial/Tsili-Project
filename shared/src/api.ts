@@ -8,7 +8,7 @@ import {
   isoDateTimeSchema,
   memberSchema,
   repaymentSchema,
-} from "./domain.js";
+} from "./domain";
 
 /** Auth request bodies, shared so the app's forms and the server enforce identical rules. */
 export const emailSchema = z.string().trim().toLowerCase().max(254).pipe(z.email());

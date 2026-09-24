@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { computeBalances, type BalanceExpense, type BalanceRepayment } from "./balances.js";
-import { MoneyError } from "./money.js";
-import { splitEqually } from "./split.js";
+import { computeBalances, type BalanceExpense, type BalanceRepayment } from "./balances";
+import { MoneyError } from "./money";
+import { splitEqually } from "./split";
 
 const members = ["giorgi", "luka", "nino"];
 

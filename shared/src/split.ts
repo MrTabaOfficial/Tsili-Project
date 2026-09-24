@@ -1,4 +1,4 @@
-import { MoneyError, assertTetri, compareIds, sumTetri, type MemberId, type Tetri } from "./money.js";
+import { MoneyError, assertTetri, compareIds, sumTetri, type MemberId, type Tetri } from "./money";
 
 /** Resolved per-member amounts. Values always sum to the split amount. */
 export type Shares = Record<MemberId, Tetri>;

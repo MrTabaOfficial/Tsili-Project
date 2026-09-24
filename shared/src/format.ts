@@ -1,5 +1,5 @@
-import { MoneyError, type Tetri } from "./money.js";
-import type { Currency } from "./domain.js";
+import { MoneyError, type Tetri } from "./money";
+import type { Currency } from "./domain";
 
 const MINOR_PER_MAJOR = 100;
 

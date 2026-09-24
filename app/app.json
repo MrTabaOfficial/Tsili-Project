@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Tsili",
+    "slug": "tsili",
+    "version": "0.1.0",
+    "scheme": "tsili",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ge.tsili.app"
+    },
+    "android": {
+      "package": "ge.tsili.app",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "root": "./src/app"
+        }
+      ],
+      "expo-sqlite"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

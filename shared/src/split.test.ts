@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { MoneyError } from "./money.js";
-import { split, splitByShares, splitEqually, splitExact } from "./split.js";
+import { MoneyError } from "./money";
+import { split, splitByShares, splitEqually, splitExact } from "./split";
 
 const sum = (shares: Record<string, number>) => Object.values(shares).reduce((a, b) => a + b, 0);
 

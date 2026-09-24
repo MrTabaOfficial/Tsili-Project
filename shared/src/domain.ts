@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { MoneyError } from "./money.js";
-import { split, type SplitRule } from "./split.js";
+import { MoneyError } from "./money";
+import { split, type SplitRule } from "./split";
 
 export const CURRENCIES = ["GEL"] as const;
 export type Currency = (typeof CURRENCIES)[number];

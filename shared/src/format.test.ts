@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { formatTetri, parseTetri } from "./format.js";
-import { MoneyError } from "./money.js";
+import { formatTetri, parseTetri } from "./format";
+import { MoneyError } from "./money";
 
 describe("formatTetri", () => {
   it("formats whole and fractional amounts with two decimals", () => {

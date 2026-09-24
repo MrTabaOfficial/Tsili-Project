@@ -7,8 +7,8 @@ import {
   repaymentSchema,
   splitRuleSchema,
   tetriSchema,
-} from "./domain.js";
-import { splitEqually } from "./split.js";
+} from "./domain";
+import { splitEqually } from "./split";
 
 const ids = {
   group: "6f1c2a3e-0000-4000-8000-000000000001",

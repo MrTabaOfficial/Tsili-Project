@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { Balances } from "./balances.js";
-import { MoneyError } from "./money.js";
-import { settleUp, type Payment } from "./settle.js";
+import type { Balances } from "./balances";
+import { MoneyError } from "./money";
+import { settleUp, type Payment } from "./settle";
 
 /** Applies payments to balances and returns what is left. Zero everywhere means the plan works. */
 function apply(balances: Balances, payments: Payment[]): Balances {

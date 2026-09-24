@@ -1,5 +1,5 @@
-import { MoneyError, compareIds, type MemberId, type Tetri } from "./money.js";
-import type { Balances } from "./balances.js";
+import { MoneyError, compareIds, type MemberId, type Tetri } from "./money";
+import type { Balances } from "./balances";
 
 export interface Payment {
   fromId: MemberId;

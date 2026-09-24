@@ -16,3 +16,6 @@ app/ios/
 
 # Prisma generated client
 server/src/generated/
+
+# Expo bundle check output
+app/.expo-export/

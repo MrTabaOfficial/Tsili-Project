@@ -1,5 +1,5 @@
-import { MoneyError, assertTetri, compareIds, sumTetri, type MemberId, type Tetri } from "./money.js";
-import type { Shares } from "./split.js";
+import { MoneyError, assertTetri, compareIds, sumTetri, type MemberId, type Tetri } from "./money";
+import type { Shares } from "./split";
 
 /** The slice of a domain Expense that balances need. Pass live records only; soft-deleted ones must be filtered out first. */
 export interface BalanceExpense {
