@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "bundle:check": "expo export --platform android --no-bytecode --output-dir .expo-export"
+    "bundle:check": "expo export --platform android --no-bytecode --output-dir .expo-export",
+    "bundle:check:web": "expo export --platform web --output-dir .expo-export-web",
+    "web": "expo start --web"
   },
   "dependencies": {
     "@tsili/shared": "*",
@@ -22,9 +24,11 @@
     "expo-sqlite": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
+    "react-native-web": "^0.21.2",
     "zod": "^4.6.5"
   },
   "devDependencies": {

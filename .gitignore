@@ -18,4 +18,4 @@ app/ios/
 server/src/generated/
 
 # Expo bundle check output
-app/.expo-export/
+app/.expo-export*/
