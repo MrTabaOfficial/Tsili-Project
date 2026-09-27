@@ -176,8 +176,11 @@ export default function AddExpenseScreen() {
           </View>
         </Section>
       ) : null}
-      {preview && !preview.ok && amount !== null ? <Text variant="muted">{preview.error}</Text> : null}
-      {saveError ? <Text style={styles.error}>{saveError}</Text> : null}
+      {saveError ? (
+        <Text style={styles.error}>{saveError}</Text>
+      ) : preview && !preview.ok && amount !== null ? (
+        <Text variant="muted">{preview.error}</Text>
+      ) : null}
 
       <Button title="Save expense" onPress={() => void save()} />
     </Screen>

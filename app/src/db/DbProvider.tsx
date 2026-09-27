@@ -18,7 +18,7 @@ export function DbProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setDb(opened);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+        if (!cancelled) setError(describeOpenError(err));
       });
     return () => {
       cancelled = true;
@@ -41,6 +41,14 @@ export function DbProvider({ children }: { children: ReactNode }) {
     );
   }
   return <DbContext.Provider value={db}>{children}</DbContext.Provider>;
+}
+
+function describeOpenError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+  if (message.includes("Access Handle")) {
+    return "The database is locked by another tab or by a page that was just reloaded. Close other Tsili tabs, then close and reopen this one.";
+  }
+  return message;
 }
 
 export function useDb(): SqlDb {

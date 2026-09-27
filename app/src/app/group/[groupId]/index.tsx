@@ -37,7 +37,12 @@ export default function GroupScreen() {
         options={{
           title: group.data?.name ?? "",
           headerRight: () => (
-            <Pressable onPress={() => router.push({ pathname: "/group/[groupId]/members", params: { groupId } })} hitSlop={8}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: "/group/[groupId]/members", params: { groupId } })}
+              hitSlop={8}
+              style={styles.headerButton}
+            >
               <Text style={{ color: p.accent, fontWeight: "600" }}>Members</Text>
             </Pressable>
           ),
@@ -124,6 +129,8 @@ export default function GroupScreen() {
 }
 
 const styles = StyleSheet.create({
+  // The native-stack header gives headerRight no inset on web, so the button would touch the edge.
+  headerButton: { paddingHorizontal: spacing.md },
   actions: { flexDirection: "row", gap: spacing.sm },
   flex: { flex: 1 },
   planRight: { alignItems: "flex-end", gap: spacing.xs },
