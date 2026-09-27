@@ -22,6 +22,10 @@ export default function RootLayout() {
           <Stack.Screen name="new-group" options={{ title: "New group", presentation: "modal" }} />
           <Stack.Screen name="group/[groupId]/index" options={{ title: "" }} />
           <Stack.Screen name="group/[groupId]/add-member" options={{ title: "Add member", presentation: "modal" }} />
+          <Stack.Screen name="group/[groupId]/members" options={{ title: "Members" }} />
+          <Stack.Screen name="group/[groupId]/add-expense" options={{ title: "Add expense", presentation: "modal" }} />
+          <Stack.Screen name="group/[groupId]/add-repayment" options={{ title: "Record payment", presentation: "modal" }} />
+          <Stack.Screen name="group/[groupId]/expense/[expenseId]" options={{ title: "" }} />
         </Stack>
       </DbProvider>
     </SafeAreaProvider>
