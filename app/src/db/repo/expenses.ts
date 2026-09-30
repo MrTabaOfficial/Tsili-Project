@@ -55,6 +55,11 @@ export async function listExpenses(db: SqlDb, groupId: string): Promise<LocalExp
   return rows.map(fromRow);
 }
 
+export async function listDirtyExpenses(db: SqlDb, groupId: string): Promise<LocalExpense[]> {
+  const rows = await db.all<ExpenseRow>("SELECT * FROM expenses WHERE group_id = ? AND dirty = 1 ORDER BY created_at ASC", [groupId]);
+  return rows.map(fromRow);
+}
+
 export async function getExpense(db: SqlDb, id: string): Promise<LocalExpense | null> {
   const row = await one<ExpenseRow>(db, "SELECT * FROM expenses WHERE id = ?", [id]);
   return row ? fromRow(row) : null;

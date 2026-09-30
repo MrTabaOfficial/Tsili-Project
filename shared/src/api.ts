@@ -65,6 +65,8 @@ export const createGroupRequestSchema = z.object({
   id: idSchema.optional(),
   name: z.string().trim().min(1).max(80),
   currency: currencySchema.default("GEL"),
+  /** A phone registering an offline-created group names the member it already uses for this account. */
+  creatorMember: z.object({ id: idSchema, name: z.string().trim().min(1).max(60) }).optional(),
 });
 export type CreateGroupRequest = z.infer<typeof createGroupRequestSchema>;
 

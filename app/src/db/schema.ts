@@ -62,6 +62,10 @@ const MIGRATIONS: string[][] = [
       last_synced_at TEXT
     )`,
   ],
+  [
+    // Which member in the group is this phone's user; set at creation or when joining.
+    `ALTER TABLE groups ADD COLUMN my_member_id TEXT`,
+  ],
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

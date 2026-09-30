@@ -30,6 +30,24 @@ export async function insertMember(db: SqlDb, input: NewMember): Promise<LocalMe
   return (await getMember(db, input.id))!;
 }
 
+/** Insert or replace. Local edits pass dirty=true; records applied from the server pass dirty=false. */
+export async function upsertMember(db: SqlDb, m: Member, dirty: boolean): Promise<void> {
+  await db.run(
+    `INSERT INTO members (id, group_id, name, user_id, created_at, updated_at, deleted_at, dirty)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       name = excluded.name, user_id = excluded.user_id, updated_at = excluded.updated_at,
+       deleted_at = excluded.deleted_at, dirty = excluded.dirty`,
+    [m.id, m.groupId, m.name, m.userId, m.createdAt, m.updatedAt, m.deletedAt, dirty ? 1 : 0],
+  );
+}
+
+/** Every changed row, deleted ones included, because deletions must reach the server too. */
+export async function listDirtyMembers(db: SqlDb, groupId: string): Promise<LocalMember[]> {
+  const rows = await db.all<MemberRow>("SELECT * FROM members WHERE group_id = ? AND dirty = 1 ORDER BY created_at ASC", [groupId]);
+  return rows.map(fromRow);
+}
+
 /** Live members only, oldest first, which is the order people were added in. */
 export async function listMembers(db: SqlDb, groupId: string): Promise<LocalMember[]> {
   const rows = await db.all<MemberRow>(

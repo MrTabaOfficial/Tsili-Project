@@ -26,10 +26,11 @@ export default function NewGroupScreen() {
     if (name.trim() === "" || yourName.trim() === "") return;
     setSaving(true);
     const groupId = newId();
+    const myMemberId = newId();
     const now = nowIso();
     await db.transaction(async () => {
-      await insertGroup(db, { id: groupId, name: name.trim(), currency: "GEL", now });
-      await insertMember(db, { id: newId(), groupId, name: yourName.trim(), now });
+      await insertGroup(db, { id: groupId, name: name.trim(), currency: "GEL", now, myMemberId });
+      await insertMember(db, { id: myMemberId, groupId, name: yourName.trim(), now });
     });
     notifyDbChanged();
     router.replace({ pathname: "/group/[groupId]", params: { groupId } });

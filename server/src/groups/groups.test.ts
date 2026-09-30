@@ -54,6 +54,18 @@ describe("POST /groups", () => {
     expect(dup.status).toBe(409);
   });
 
+  it("uses the client's own member id and name for the creator when given", async () => {
+    const memberId = "7a1c2a3e-0000-4000-8000-00000000aaaa";
+    const res = await request(app)
+      .post("/groups")
+      .set(bearer(luka))
+      .send({ name: "Offline trip", creatorMember: { id: memberId, name: "Luka B." } });
+    expect(res.status).toBe(201);
+    expect(res.body.members).toEqual([expect.objectContaining({ id: memberId, name: "Luka B.", userId: luka.id })]);
+    const dup = await request(app).post("/groups").set(bearer(nino)).send({ name: "Other", creatorMember: { id: memberId, name: "X" } });
+    expect(dup.status).toBe(409);
+  });
+
   it("requires authentication and a name", async () => {
     expect((await request(app).post("/groups").send({ name: "x" })).status).toBe(401);
     expect((await request(app).post("/groups").set(bearer(luka)).send({ name: "  " })).status).toBe(400);

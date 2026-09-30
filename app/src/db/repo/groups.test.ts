@@ -41,6 +41,7 @@ describe("groups", () => {
       updatedAt: T0,
       deletedAt: null,
       dirty: true,
+      myMemberId: null,
     });
     await insertGroup(db, { id: G2, name: "Flat", currency: "GEL", now: T1 });
     expect((await listGroups(db)).map((x) => x.name)).toEqual(["Flat", "Kazbegi"]);

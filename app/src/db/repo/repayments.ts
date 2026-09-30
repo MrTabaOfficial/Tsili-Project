@@ -38,6 +38,11 @@ export async function listRepayments(db: SqlDb, groupId: string): Promise<LocalR
   return rows.map(fromRow);
 }
 
+export async function listDirtyRepayments(db: SqlDb, groupId: string): Promise<LocalRepayment[]> {
+  const rows = await db.all<RepaymentRow>("SELECT * FROM repayments WHERE group_id = ? AND dirty = 1 ORDER BY created_at ASC", [groupId]);
+  return rows.map(fromRow);
+}
+
 export async function getRepayment(db: SqlDb, id: string): Promise<LocalRepayment | null> {
   const row = await one<RepaymentRow>(db, "SELECT * FROM repayments WHERE id = ?", [id]);
   return row ? fromRow(row) : null;

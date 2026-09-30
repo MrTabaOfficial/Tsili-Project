@@ -30,6 +30,9 @@ export class GroupService {
     if (input.id && (await this.db.group.findUnique({ where: { id: input.id }, select: { id: true } }))) {
       throw new HttpError(409, "GROUP_EXISTS", "a group with this id already exists");
     }
+    if (input.creatorMember && (await this.db.member.findUnique({ where: { id: input.creatorMember.id }, select: { id: true } }))) {
+      throw new HttpError(409, "MEMBER_EXISTS", "a member with this id already exists");
+    }
     for (let attempt = 1; ; attempt++) {
       try {
         const group = await this.db.group.create({
@@ -38,7 +41,13 @@ export class GroupService {
             name: input.name,
             currency: input.currency,
             inviteCode: generateInviteCode(),
-            members: { create: { id: randomUUID(), name: user.displayName, userId } },
+            members: {
+              create: {
+                id: input.creatorMember?.id ?? randomUUID(),
+                name: input.creatorMember?.name ?? user.displayName,
+                userId,
+              },
+            },
           },
           include: { members: true },
         });
