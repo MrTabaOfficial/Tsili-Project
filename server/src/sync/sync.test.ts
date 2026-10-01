@@ -97,6 +97,7 @@ function repayment(overrides: Partial<Repayment> = {}): Repayment {
 describe("push and pull", () => {
   it("returns the two members on a fresh pull and advances the cursor", async () => {
     const res = await sync(luka, "0");
+    expect(res.group).toMatchObject({ id: groupId, name: "Kazbegi", inviteCode });
     expect(res.changes.members.map((m) => m.name).sort()).toEqual(["Luka", "Nino"]);
     expect(res.changes.expenses).toEqual([]);
     expect(BigInt(res.cursor)).toBeGreaterThan(0n);
@@ -176,6 +177,13 @@ describe("validation", () => {
       .set(bearer(luka))
       .send({ cursor: "0", changes: { expenses: Array.from({ length: 1001 }, () => ({})) } });
     expect(huge.status).toBe(400);
+  });
+
+  it("a deleted group answers 404 to every member's sync", async () => {
+    await request(app).delete(`/groups/${groupId}`).set(bearer(luka));
+    const res = await request(app).post(`/groups/${groupId}/sync`).set(bearer(nino)).send({ cursor: "0" });
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe("GROUP_NOT_FOUND");
   });
 
   it("non-members get 404", async () => {

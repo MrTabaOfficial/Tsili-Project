@@ -72,6 +72,8 @@ export type CreateGroupRequest = z.infer<typeof createGroupRequestSchema>;
 
 export const updateGroupRequestSchema = z.object({
   name: z.string().trim().min(1).max(80),
+  /** When set, the server applies the rename only if this is newer than its copy (same rule as sync). */
+  updatedAt: isoDateTimeSchema.optional(),
 });
 export type UpdateGroupRequest = z.infer<typeof updateGroupRequestSchema>;
 
@@ -137,6 +139,8 @@ export type SyncRejection = z.infer<typeof syncRejectionSchema>;
 
 export const syncResponseSchema = z.object({
   cursor: syncCursorSchema,
+  /** Always included so phones pick up renames; deletion is signalled by a 404 instead. */
+  group: groupSchema,
   changes: z.object({
     members: z.array(memberSchema),
     expenses: z.array(expenseSchema),

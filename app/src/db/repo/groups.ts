@@ -65,6 +65,22 @@ export async function listGroups(db: SqlDb): Promise<LocalGroup[]> {
   return rows.map(fromRow);
 }
 
+/** Groups the engine must visit: every live one, plus deleted ones whose deletion has not been pushed. */
+export async function listGroupsToSync(db: SqlDb): Promise<LocalGroup[]> {
+  const rows = await db.all<GroupRow>("SELECT * FROM groups WHERE deleted_at IS NULL OR dirty = 1 ORDER BY created_at ASC");
+  return rows.map(fromRow);
+}
+
+/** Clears dirty only if the row still carries the updatedAt that was pushed. */
+export async function markGroupClean(db: SqlDb, id: string, pushedUpdatedAt: string): Promise<void> {
+  await db.run("UPDATE groups SET dirty = 0 WHERE id = ? AND updated_at = ?", [id, pushedUpdatedAt]);
+}
+
+/** Learned from the server (404 on sync): the group was deleted or we were removed. Not pushed back. */
+export async function markGroupGone(db: SqlDb, id: string, now: string): Promise<void> {
+  await db.run("UPDATE groups SET deleted_at = COALESCE(deleted_at, ?), dirty = 0 WHERE id = ?", [now, id]);
+}
+
 export async function getGroup(db: SqlDb, id: string): Promise<LocalGroup | null> {
   const row = await one<GroupRow>(db, "SELECT * FROM groups WHERE id = ?", [id]);
   return row ? fromRow(row) : null;

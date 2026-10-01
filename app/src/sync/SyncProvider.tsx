@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
-import type { CreateGroupRequest, GroupWithMembers, SyncRejection, SyncRequest, SyncResponse } from "@tsili/shared";
+import type { CreateGroupRequest, GroupWithMembers, SyncRejection, SyncRequest, SyncResponse, UpdateGroupRequest } from "@tsili/shared";
 import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { notifyDbChanged, useDbVersion } from "../db/changes";
@@ -37,6 +37,9 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     () => ({
       createGroup: (req: CreateGroupRequest) => apiFetch<GroupWithMembers>("/groups", { body: req, tokens: auth.tokens }),
       getGroup: (groupId: string) => apiFetch<GroupWithMembers>(`/groups/${groupId}`, { tokens: auth.tokens }),
+      renameGroup: (groupId: string, req: UpdateGroupRequest) =>
+        apiFetch<GroupWithMembers>(`/groups/${groupId}`, { method: "PATCH", body: req, tokens: auth.tokens }),
+      deleteGroup: (groupId: string) => apiFetch<void>(`/groups/${groupId}`, { method: "DELETE", tokens: auth.tokens }),
       sync: (groupId: string, req: SyncRequest) => apiFetch<SyncResponse>(`/groups/${groupId}/sync`, { body: req, tokens: auth.tokens }),
     }),
     [auth.tokens],

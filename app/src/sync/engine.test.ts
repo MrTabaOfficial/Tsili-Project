@@ -1,8 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { splitEqually, type CreateGroupRequest, type Expense, type GroupWithMembers, type Member, type SyncRequest, type SyncResponse } from "@tsili/shared";
+import {
+  splitEqually,
+  type CreateGroupRequest,
+  type Expense,
+  type Group,
+  type GroupWithMembers,
+  type Member,
+  type SyncRequest,
+  type SyncResponse,
+  type UpdateGroupRequest,
+} from "@tsili/shared";
 import { openNodeDb } from "../db/node-sqlite";
 import { getExpense, listExpenses, upsertExpense } from "../db/repo/expenses";
-import { getGroup, insertGroup } from "../db/repo/groups";
+import { deleteGroup, getGroup, insertGroup, listGroups, renameGroup } from "../db/repo/groups";
 import { getMember, insertMember, listMembers, renameMember } from "../db/repo/members";
 import { migrate } from "../db/schema";
 import { getCursor } from "../db/repo/syncState";
@@ -25,8 +35,11 @@ class FakeApi implements SyncApi {
   createGroupCalls: CreateGroupRequest[] = [];
   syncCalls: { groupId: string; req: SyncRequest }[] = [];
   getGroupCalls = 0;
+  renameCalls: { groupId: string; req: UpdateGroupRequest }[] = [];
+  deleteCalls: string[] = [];
   createGroupError: unknown = null;
-  nextSync: SyncResponse = { cursor: "1", changes: { members: [], expenses: [], repayments: [] }, rejected: [] };
+  syncError: unknown = null;
+  nextSync: SyncResponse = { cursor: "1", group: serverGroupRow(), changes: { members: [], expenses: [], repayments: [] }, rejected: [] };
 
   async createGroup(req: CreateGroupRequest): Promise<GroupWithMembers> {
     this.createGroupCalls.push(req);
@@ -37,15 +50,28 @@ class FakeApi implements SyncApi {
     this.getGroupCalls += 1;
     return serverGroup(ME, "Me");
   }
+  async renameGroup(groupId: string, req: UpdateGroupRequest): Promise<GroupWithMembers> {
+    this.renameCalls.push({ groupId, req });
+    const data = serverGroup(ME, "Me");
+    return { ...data, group: { ...data.group, name: req.name, updatedAt: req.updatedAt ?? data.group.updatedAt } };
+  }
+  async deleteGroup(groupId: string): Promise<void> {
+    this.deleteCalls.push(groupId);
+  }
   async sync(groupId: string, req: SyncRequest): Promise<SyncResponse> {
     this.syncCalls.push({ groupId, req });
+    if (this.syncError) throw this.syncError;
     return this.nextSync;
   }
 }
 
+function serverGroupRow(overrides: Partial<Group> = {}): Group {
+  return { id: G, name: "Kazbegi", currency: "GEL", inviteCode: "KAZB2326", createdAt: T0, updatedAt: T0, deletedAt: null, ...overrides };
+}
+
 function serverGroup(memberId: string, memberName: string): GroupWithMembers {
   return {
-    group: { id: G, name: "Kazbegi", currency: "GEL", inviteCode: "KAZB2326", createdAt: T0, updatedAt: T0, deletedAt: null },
+    group: serverGroupRow(),
     members: [{ id: memberId, groupId: G, name: memberName, userId: USER, createdAt: T0, updatedAt: T0, deletedAt: null }],
   };
 }
@@ -138,7 +164,7 @@ describe("push", () => {
     await offlineGroup();
     await upsertExpense(db, expense(E1, T0), true);
     const api = new FakeApi();
-    api.nextSync = { cursor: "5", changes: { members: [], expenses: [], repayments: [] }, rejected: [{ kind: "expense", id: E1, code: "VALIDATION", message: "bad" }] };
+    api.nextSync = { ...api.nextSync, cursor: "5", rejected: [{ kind: "expense", id: E1, code: "VALIDATION", message: "bad" }] };
     const result = await syncGroup({ db, api }, G);
     expect(result.rejected).toHaveLength(1);
     expect(result.pushed).toBe(0);
@@ -155,9 +181,9 @@ describe("pull", () => {
     await upsertExpense(db, expense(E2, T0, "local older"), false);
     const api = new FakeApi();
     api.nextSync = {
+      ...api.nextSync,
       cursor: "9",
       changes: { members: [], expenses: [expense(E1, T0, "server older"), expense(E2, T2, "server newer")], repayments: [] },
-      rejected: [],
     };
     const result = await syncGroup({ db, api }, G);
     expect((await getExpense(db, E1))).toMatchObject({ description: "local newer", dirty: false });
@@ -170,7 +196,7 @@ describe("pull", () => {
     await insertMember(db, { id: NINO, groupId: G, name: "Nino renamed locally", now: T2 });
     const api = new FakeApi();
     const claimed: Member = { id: NINO, groupId: G, name: "Nino", userId: USER, createdAt: T0, updatedAt: T1, deletedAt: null };
-    api.nextSync = { cursor: "3", changes: { members: [claimed], expenses: [], repayments: [] }, rejected: [] };
+    api.nextSync = { ...api.nextSync, cursor: "3", changes: { members: [claimed], expenses: [], repayments: [] } };
     await syncGroup({ db, api }, G);
     // The local row was pushed in this same call, so it is clean, but its newer name survives and the claim is taken.
     expect(await getMember(db, NINO)).toMatchObject({ name: "Nino renamed locally", userId: USER, dirty: false });
@@ -180,9 +206,65 @@ describe("pull", () => {
     await offlineGroup();
     await upsertExpense(db, expense(E1, T0), false);
     const api = new FakeApi();
-    api.nextSync = { cursor: "4", changes: { members: [], expenses: [{ ...expense(E1, T1), deletedAt: T1 }], repayments: [] }, rejected: [] };
+    api.nextSync = { ...api.nextSync, cursor: "4", changes: { members: [], expenses: [{ ...expense(E1, T1), deletedAt: T1 }], repayments: [] } };
     await syncGroup({ db, api }, G);
     expect(await listExpenses(db, G)).toEqual([]);
+  });
+});
+
+describe("group rename and delete", () => {
+  async function registered() {
+    await offlineGroup();
+    const api = new FakeApi();
+    await syncGroup({ db, api }, G);
+    return api;
+  }
+
+  it("pushes an offline rename with its timestamp and marks the group clean", async () => {
+    const api = await registered();
+    await renameGroup(db, G, "Svaneti", T2);
+    await syncGroup({ db, api }, G);
+    expect(api.renameCalls).toEqual([{ groupId: G, req: { name: "Svaneti", updatedAt: T2 } }]);
+    expect(await getGroup(db, G)).toMatchObject({ name: "Svaneti", dirty: false });
+  });
+
+  it("applies a rename coming from the server unless the local rename is newer", async () => {
+    const api = await registered();
+    api.nextSync = { ...api.nextSync, group: serverGroupRow({ name: "Renamed elsewhere", updatedAt: T1 }) };
+    await syncGroup({ db, api }, G);
+    expect((await getGroup(db, G))?.name).toBe("Renamed elsewhere");
+
+    await renameGroup(db, G, "Mine, newer", T2);
+    api.nextSync = { ...api.nextSync, group: serverGroupRow({ name: "Older server name", updatedAt: T1 }) };
+    await syncGroup({ db, api }, G);
+    expect((await getGroup(db, G))?.name).toBe("Mine, newer");
+  });
+
+  it("pushes a deletion once and skips the group afterwards", async () => {
+    const api = await registered();
+    await deleteGroup(db, G, T2);
+    await syncAll({ db, api });
+    await syncAll({ db, api });
+    expect(api.deleteCalls).toEqual([G]);
+    expect(api.syncCalls).toHaveLength(1); // only the registration-time sync
+    expect(await getGroup(db, G)).toMatchObject({ deletedAt: T2, dirty: false });
+  });
+
+  it("does not call the server for a group deleted before it was ever registered", async () => {
+    await offlineGroup();
+    await deleteGroup(db, G, T1);
+    const api = new FakeApi();
+    await syncAll({ db, api });
+    expect(api.createGroupCalls).toEqual([]);
+    expect(api.deleteCalls).toEqual([]);
+  });
+
+  it("hides a group locally when the server answers GROUP_NOT_FOUND", async () => {
+    const api = await registered();
+    api.syncError = Object.assign(new Error("gone"), { code: "GROUP_NOT_FOUND" });
+    await syncGroup({ db, api, now: () => T2 }, G);
+    expect(await listGroups(db)).toEqual([]);
+    expect(await getGroup(db, G)).toMatchObject({ deletedAt: T2, dirty: false });
   });
 });
 

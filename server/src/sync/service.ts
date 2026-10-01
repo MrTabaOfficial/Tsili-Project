@@ -11,7 +11,7 @@ import {
   type SyncResponse,
 } from "@tsili/shared";
 import type { Db } from "../db.js";
-import { toExpense, toMember, toRepayment } from "../groups/mappers.js";
+import { toExpense, toGroup, toMember, toRepayment } from "../groups/mappers.js";
 import { requireMembership } from "../groups/membership.js";
 import { nextServerSeq } from "./seq.js";
 
@@ -59,7 +59,8 @@ export class SyncService {
         await this.applyRepayment(tx, groupId, raw, memberIds, superseded.repayments, rejections);
       }
 
-      const [members, expenses, repayments] = await Promise.all([
+      const [group, members, expenses, repayments] = await Promise.all([
+        tx.group.findUniqueOrThrow({ where: { id: groupId } }),
         tx.member.findMany({
           where: { groupId, OR: [{ serverSeq: { gt: cursor } }, { id: { in: [...superseded.members] } }] },
           orderBy: { serverSeq: "asc" },
@@ -81,6 +82,7 @@ export class SyncService {
 
       return {
         cursor: newCursor.toString(),
+        group: toGroup(group),
         changes: {
           members: members.map(toMember),
           expenses: expenses.map(toExpense),

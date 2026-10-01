@@ -97,6 +97,16 @@ describe("GET /groups and /groups/:id", () => {
 });
 
 describe("PATCH and DELETE /groups/:id", () => {
+  it("applies a timestamped rename only when it is newer than the server copy", async () => {
+    const { group } = await createGroup(luka);
+    const older = new Date(Date.now() - 60_000).toISOString();
+    const newer = new Date(Date.now() + 60_000).toISOString();
+    const stale = await request(app).patch(`/groups/${group.id}`).set(bearer(luka)).send({ name: "Stale", updatedAt: older });
+    expect(stale.body.group.name).toBe("Kazbegi trip");
+    const fresh = await request(app).patch(`/groups/${group.id}`).set(bearer(luka)).send({ name: "Fresh", updatedAt: newer });
+    expect(fresh.body.group).toMatchObject({ name: "Fresh", updatedAt: newer });
+  });
+
   it("renames and soft-deletes", async () => {
     const { group } = await createGroup(luka);
     const renamed = await request(app).patch(`/groups/${group.id}`).set(bearer(luka)).send({ name: "Svaneti" });

@@ -75,7 +75,15 @@ export class GroupService {
 
   async update(userId: string, groupId: string, input: UpdateGroupRequest): Promise<GroupWithMembers> {
     await requireMembership(this.db, userId, groupId);
-    await this.db.group.update({ where: { id: groupId }, data: { name: input.name } });
+    if (input.updatedAt) {
+      // Offline rename with a timestamp: newer wins, exactly like synced records.
+      await this.db.group.updateMany({
+        where: { id: groupId, updatedAt: { lt: new Date(input.updatedAt) } },
+        data: { name: input.name, updatedAt: new Date(input.updatedAt) },
+      });
+    } else {
+      await this.db.group.update({ where: { id: groupId }, data: { name: input.name } });
+    }
     return this.load(groupId);
   }
 
