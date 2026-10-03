@@ -1,50 +1,78 @@
 import { Link, Stack, useRouter } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useAuth } from "../auth/AuthProvider";
-import { listGroups } from "../db/repo/groups";
-import { useSync } from "../sync/SyncProvider";
-import { describeSync } from "./account";
+import { listGroups, type LocalGroup } from "../db/repo/groups";
+import type { SqlDb } from "../db/sql";
 import { useQuery } from "../db/useQuery";
-import { spacing, usePalette } from "../theme";
+import { loadLedger } from "../domain/useLedger";
+import { useT } from "../settings/SettingsProvider";
+import { describeSync } from "../sync/describeSync";
+import { useSync } from "../sync/SyncProvider";
+import { spacing } from "../theme";
+import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
+import { IconButton } from "../ui/IconButton";
 import { ListRow } from "../ui/ListRow";
+import { Money } from "../ui/Money";
 import { Screen } from "../ui/Screen";
 import { Text } from "../ui/Text";
 
+interface GroupCard {
+  group: LocalGroup;
+  memberCount: number;
+  /** This phone's balance in the group, or null when the user has not picked a member yet. */
+  mine: number | null;
+}
+
+async function loadCards(db: SqlDb): Promise<GroupCard[]> {
+  const groups = await listGroups(db);
+  return Promise.all(
+    groups.map(async (group) => {
+      const ledger = await loadLedger(db, group.id);
+      return {
+        group,
+        memberCount: ledger.members.length,
+        mine: group.myMemberId ? (ledger.balances[group.myMemberId] ?? 0) : null,
+      };
+    }),
+  );
+}
+
 export default function GroupsScreen() {
   const router = useRouter();
-  const p = usePalette();
+  const t = useT();
   const auth = useAuth();
   const sync = useSync();
-  const groups = useQuery((db) => listGroups(db), []);
+  const cards = useQuery(loadCards, []);
 
   return (
     <Screen>
       <Stack.Screen
         options={{
-          headerRight: () => (
-            <Pressable accessibilityRole="button" onPress={() => router.push("/account")} hitSlop={8} style={styles.headerButton}>
-              <Text style={{ color: p.accent, fontWeight: "600" }}>{auth.status === "signedIn" ? "Account" : "Sign in"}</Text>
-            </Pressable>
-          ),
+          headerRight: () => <IconButton icon="settings-outline" label={t("settings.title")} onPress={() => router.push("/settings")} />,
         }}
       />
-      <Text variant="muted">{auth.status === "signedIn" ? describeSync(sync.status) : "Sign in to sync with other phones."}</Text>
-      {groups.error ? <Text>{groups.error.message}</Text> : null}
-      {groups.data && groups.data.length === 0 ? (
-        <EmptyState title="No groups yet" hint="Start one for a trip or a flat, then invite the others." />
+      <Text variant="muted">{auth.status === "signedIn" ? describeSync(sync.status, t) : t("groups.signInHint")}</Text>
+      {cards.error ? <Text>{cards.error.message}</Text> : null}
+      {cards.data && cards.data.length === 0 ? (
+        <EmptyState icon="people-outline" title={t("groups.empty.title")} hint={t("groups.empty.hint")} />
       ) : null}
       <View style={styles.list}>
-        {groups.data?.map((g) => (
-          <Link key={g.id} href={{ pathname: "/group/[groupId]", params: { groupId: g.id } }} asChild>
-            <ListRow title={g.name} subtitle={g.inviteCode ? `Invite code ${g.inviteCode}` : "Not synced yet"} />
+        {cards.data?.map(({ group, memberCount, mine }) => (
+          <Link key={group.id} href={{ pathname: "/group/[groupId]", params: { groupId: group.id } }} asChild>
+            <ListRow
+              title={group.name}
+              subtitle={`${t("groups.members", { n: memberCount })} · ${group.inviteCode ?? t("groups.notSynced")}`}
+              left={<Avatar name={group.name} size={40} />}
+              right={mine !== null && mine !== 0 ? <Money amount={mine} currency={group.currency} signed /> : null}
+            />
           </Link>
         ))}
       </View>
       <View style={styles.actions}>
-        <Button title="New group" onPress={() => router.push("/new-group")} style={styles.flex} />
-        <Button title="Join with code" variant="secondary" onPress={() => router.push("/join")} style={styles.flex} />
+        <Button title={t("groups.new")} icon="add" onPress={() => router.push("/new-group")} style={styles.flex} />
+        <Button title={t("groups.join")} icon="enter-outline" variant="secondary" onPress={() => router.push("/join")} style={styles.flex} />
       </View>
     </Screen>
   );
@@ -54,5 +82,4 @@ const styles = StyleSheet.create({
   list: { gap: spacing.sm },
   actions: { flexDirection: "row", gap: spacing.sm },
   flex: { flex: 1 },
-  headerButton: { paddingHorizontal: spacing.md },
 });

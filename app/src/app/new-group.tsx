@@ -1,10 +1,12 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useAuth } from "../auth/AuthProvider";
 import { notifyDbChanged } from "../db/changes";
 import { useDb } from "../db/DbProvider";
 import { insertGroup } from "../db/repo/groups";
 import { insertMember } from "../db/repo/members";
 import { newId, nowIso } from "../lib/ids";
+import { useT } from "../settings/SettingsProvider";
 import { Button } from "../ui/Button";
 import { Screen } from "../ui/Screen";
 import { Text } from "../ui/Text";
@@ -13,13 +15,16 @@ import { TextField } from "../ui/TextField";
 export default function NewGroupScreen() {
   const db = useDb();
   const router = useRouter();
+  const t = useT();
+  const auth = useAuth();
   const [name, setName] = useState("");
-  const [yourName, setYourName] = useState("");
+  // Signed-in users already told us their name; everyone else types it.
+  const [yourName, setYourName] = useState(auth.user?.displayName ?? "");
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const nameError = submitted && name.trim() === "" ? "Give the group a name" : null;
-  const yourNameError = submitted && yourName.trim() === "" ? "Add yourself as the first member" : null;
+  const nameError = submitted && name.trim() === "" ? t("newGroup.nameError") : null;
+  const yourNameError = submitted && yourName.trim() === "" ? t("newGroup.yourNameError") : null;
 
   async function save() {
     setSubmitted(true);
@@ -38,10 +43,10 @@ export default function NewGroupScreen() {
 
   return (
     <Screen>
-      <TextField label="Group name" value={name} onChangeText={setName} placeholder="Kazbegi trip" autoFocus error={nameError} />
-      <TextField label="Your name" value={yourName} onChangeText={setYourName} placeholder="Luka" error={yourNameError} />
-      <Text variant="muted">Currency: GEL. Everyone in the group shares one currency.</Text>
-      <Button title={saving ? "Saving…" : "Create group"} onPress={() => void save()} disabled={saving} />
+      <TextField label={t("newGroup.name")} value={name} onChangeText={setName} placeholder={t("newGroup.namePlaceholder")} autoFocus error={nameError} />
+      <TextField label={t("newGroup.yourName")} value={yourName} onChangeText={setYourName} placeholder="Luka" error={yourNameError} />
+      <Text variant="muted">{t("newGroup.currencyNote")}</Text>
+      <Button title={saving ? t("newGroup.saving") : t("newGroup.create")} icon="checkmark" onPress={() => void save()} disabled={saving} />
     </Screen>
   );
 }

@@ -1,5 +1,7 @@
+import { getLocales } from "expo-localization";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { detectLocale, translate } from "../i18n";
 import { openExpoDb } from "./expo-sqlite";
 import { migrate } from "./schema";
 import type { SqlDb } from "./sql";
@@ -26,9 +28,11 @@ export function DbProvider({ children }: { children: ReactNode }) {
   }, []);
 
   if (error) {
+    // Stored preferences are unreachable here, so the device language decides.
+    const locale = detectLocale(getLocales()[0]?.languageCode);
     return (
       <View style={styles.center}>
-        <Text style={styles.error}>Could not open the local database.</Text>
+        <Text style={styles.error}>{translate(locale, "db.openFailed")}</Text>
         <Text style={styles.detail}>{error}</Text>
       </View>
     );
@@ -46,7 +50,7 @@ export function DbProvider({ children }: { children: ReactNode }) {
 function describeOpenError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err);
   if (message.includes("Access Handle")) {
-    return "The database is locked by another tab or by a page that was just reloaded. Close other Tsili tabs, then close and reopen this one.";
+    return translate(detectLocale(getLocales()[0]?.languageCode), "db.locked");
   }
   return message;
 }

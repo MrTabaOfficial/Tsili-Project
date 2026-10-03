@@ -3,39 +3,55 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "../auth/AuthProvider";
 import { DbProvider } from "../db/DbProvider";
+import { SettingsProvider, useT } from "../settings/SettingsProvider";
 import { SyncProvider } from "../sync/SyncProvider";
-import { usePalette } from "../theme";
+import { usePalette, useScheme } from "../theme";
 
 export default function RootLayout() {
-  const p = usePalette();
   return (
     <SafeAreaProvider>
       <DbProvider>
-        <AuthProvider>
-          <SyncProvider>
-            <StatusBar style="auto" />
-            <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: p.background },
-            headerTintColor: p.text,
-            headerShadowVisible: false,
-            contentStyle: { backgroundColor: p.background },
-          }}
-        >
-          <Stack.Screen name="index" options={{ title: "Groups" }} />
-          <Stack.Screen name="account" options={{ title: "Account", presentation: "modal" }} />
-          <Stack.Screen name="join" options={{ title: "Join a group", presentation: "modal" }} />
-          <Stack.Screen name="new-group" options={{ title: "New group", presentation: "modal" }} />
-          <Stack.Screen name="group/[groupId]/index" options={{ title: "" }} />
-          <Stack.Screen name="group/[groupId]/add-member" options={{ title: "Add member", presentation: "modal" }} />
-          <Stack.Screen name="group/[groupId]/members" options={{ title: "Members" }} />
-          <Stack.Screen name="group/[groupId]/add-expense" options={{ title: "Add expense", presentation: "modal" }} />
-          <Stack.Screen name="group/[groupId]/add-repayment" options={{ title: "Record payment", presentation: "modal" }} />
-          <Stack.Screen name="group/[groupId]/expense/[expenseId]" options={{ title: "" }} />
-        </Stack>
-          </SyncProvider>
-        </AuthProvider>
+        <SettingsProvider>
+          <AuthProvider>
+            <SyncProvider>
+              <Shell />
+            </SyncProvider>
+          </AuthProvider>
+        </SettingsProvider>
       </DbProvider>
     </SafeAreaProvider>
+  );
+}
+
+/** Lives below the providers so header colours and titles follow the stored theme and language. */
+function Shell() {
+  const p = usePalette();
+  const scheme = useScheme();
+  const t = useT();
+  return (
+    <>
+      <StatusBar style={scheme === "dark" ? "light" : "dark"} />
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: p.background },
+          headerTintColor: p.text,
+          headerTitleStyle: { fontWeight: "700" },
+          headerShadowVisible: false,
+          headerBackButtonDisplayMode: "minimal",
+          contentStyle: { backgroundColor: p.background },
+        }}
+      >
+        <Stack.Screen name="index" options={{ title: t("groups.title") }} />
+        <Stack.Screen name="settings" options={{ title: t("settings.title"), presentation: "modal" }} />
+        <Stack.Screen name="join" options={{ title: t("join.title"), presentation: "modal" }} />
+        <Stack.Screen name="new-group" options={{ title: t("newGroup.title"), presentation: "modal" }} />
+        <Stack.Screen name="group/[groupId]/index" options={{ title: "" }} />
+        <Stack.Screen name="group/[groupId]/members" options={{ title: t("members.title") }} />
+        <Stack.Screen name="group/[groupId]/add-member" options={{ title: t("addMember.title"), presentation: "modal" }} />
+        <Stack.Screen name="group/[groupId]/add-expense" options={{ title: t("expense.title"), presentation: "modal" }} />
+        <Stack.Screen name="group/[groupId]/add-repayment" options={{ title: t("repayment.title"), presentation: "modal" }} />
+        <Stack.Screen name="group/[groupId]/expense/[expenseId]" options={{ title: "" }} />
+      </Stack>
+    </>
   );
 }

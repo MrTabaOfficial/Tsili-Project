@@ -1,15 +1,18 @@
-import { dateOnlySchema, formatTetri, MoneyError, parseTetri, type Expense } from "@tsili/shared";
+import { dateOnlySchema, MoneyError, parseTetri, type Expense } from "@tsili/shared";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { notifyDbChanged } from "../../../db/changes";
 import { useDb } from "../../../db/DbProvider";
 import { upsertExpense } from "../../../db/repo/expenses";
+import { getGroup } from "../../../db/repo/groups";
 import { listMembers } from "../../../db/repo/members";
 import { useQuery } from "../../../db/useQuery";
 import { emptySplitInputs, exactTotal, resolveSplit, type SplitInputs, type SplitMode } from "../../../domain/expenseForm";
-import { newId, nowIso, todayLocal } from "../../../lib/ids";
-import { spacing } from "../../../theme";
+import { formatMoney, localIsoDate } from "../../../lib/format";
+import { newId, nowIso } from "../../../lib/ids";
+import { useLocale, useT } from "../../../settings/SettingsProvider";
+import { spacing, usePalette } from "../../../theme";
 import { Button } from "../../../ui/Button";
 import { Chips } from "../../../ui/Chips";
 import { Screen } from "../../../ui/Screen";
@@ -17,48 +20,58 @@ import { Section } from "../../../ui/Section";
 import { Text } from "../../../ui/Text";
 import { TextField } from "../../../ui/TextField";
 
-const MODES: { id: SplitMode; label: string }[] = [
-  { id: "equal", label: "Equally" },
-  { id: "exact", label: "Exact amounts" },
-  { id: "shares", label: "By shares" },
-];
-
 export default function AddExpenseScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const db = useDb();
   const router = useRouter();
+  const t = useT();
+  const locale = useLocale();
+  const p = usePalette();
+  const group = useQuery((d) => getGroup(d, groupId), [groupId]);
   const members = useQuery((d) => listMembers(d, groupId), [groupId]);
+  const currency = group.data?.currency ?? "GEL";
 
   const [description, setDescription] = useState("");
   const [amountText, setAmountText] = useState("");
   const [payerId, setPayerId] = useState<string | null>(null);
-  const [date, setDate] = useState(todayLocal());
+  const [date, setDate] = useState(localIsoDate(0));
   const [splitInputs, setSplitInputs] = useState<SplitInputs | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Participants default to everyone once the member list is known.
+  // Participants default to everyone; the payer defaults to this phone's user.
   useEffect(() => {
     if (members.data && splitInputs === null) {
       setSplitInputs(emptySplitInputs(members.data.map((m) => m.id)));
-      setPayerId((id) => id ?? members.data?.[0]?.id ?? null);
+      setPayerId((id) => id ?? group.data?.myMemberId ?? members.data?.[0]?.id ?? null);
     }
-  }, [members.data, splitInputs]);
+  }, [members.data, splitInputs, group.data]);
 
   const amount = useMemo(() => {
     try {
       return parseTetri(amountText);
     } catch (err) {
-      return err instanceof MoneyError ? null : null;
+      if (err instanceof MoneyError) return null;
+      throw err;
     }
   }, [amountText]);
 
   const preview = useMemo(() => (amount !== null && splitInputs ? resolveSplit(amount, splitInputs) : null), [amount, splitInputs]);
 
-  const descriptionError = submitted && description.trim() === "" ? "What was it for?" : null;
-  const amountError = submitted && (amount === null || amount === 0) ? "Enter an amount like 45.50" : null;
-  const payerError = submitted && !payerId ? "Who paid?" : null;
-  const dateError = submitted && !dateOnlySchema.safeParse(date).success ? "Use YYYY-MM-DD" : null;
+  const descriptionError = submitted && description.trim() === "" ? t("expense.error.description") : null;
+  const amountError = submitted && (amount === null || amount === 0) ? t("expense.error.amount") : null;
+  const payerError = submitted && !payerId ? t("expense.error.payer") : null;
+  const dateError = submitted && !dateOnlySchema.safeParse(date).success ? t("expense.error.date") : null;
+
+  const modes: { id: SplitMode; label: string }[] = [
+    { id: "equal", label: t("expense.split.equal") },
+    { id: "exact", label: t("expense.split.exact") },
+    { id: "shares", label: t("expense.split.shares") },
+  ];
+  const dateQuickPicks = [
+    { id: localIsoDate(0), label: t("common.today") },
+    { id: localIsoDate(-1), label: t("common.yesterday") },
+  ];
 
   function update(patch: Partial<SplitInputs>) {
     setSplitInputs((s) => (s ? { ...s, ...patch } : s));
@@ -71,7 +84,7 @@ export default function AddExpenseScreen() {
     if (!dateOnlySchema.safeParse(date).success) return;
     const resolved = resolveSplit(amount, splitInputs);
     if (!resolved.ok) {
-      setSaveError(resolved.error);
+      setSaveError(t(resolved.errorKey));
       return;
     }
     const now = nowIso();
@@ -98,28 +111,34 @@ export default function AddExpenseScreen() {
 
   return (
     <Screen>
-      <TextField label="Description" value={description} onChangeText={setDescription} placeholder="Khinkali" autoFocus error={descriptionError} />
       <TextField
-        label="Amount (GEL)"
+        label={t("expense.description")}
+        value={description}
+        onChangeText={setDescription}
+        placeholder={t("expense.descriptionPlaceholder")}
+        autoFocus
+        error={descriptionError}
+      />
+      <TextField
+        label={t("expense.amount", { currency })}
         value={amountText}
         onChangeText={setAmountText}
         placeholder="45.50"
         keyboardType="decimal-pad"
         error={amountError}
       />
-      <TextField label="Date" value={date} onChangeText={setDate} placeholder="2026-10-07" autoCapitalize="none" error={dateError} />
+      <View style={styles.dateBlock}>
+        <TextField label={t("expense.date")} value={date} onChangeText={setDate} placeholder="2026-10-07" autoCapitalize="none" error={dateError} />
+        <Chips options={dateQuickPicks} selected={new Set([date])} onToggle={setDate} />
+      </View>
 
-      <Section title="Paid by">
+      <Section title={t("expense.paidBy")}>
         <Chips options={memberOptions} selected={new Set(payerId ? [payerId] : [])} onToggle={setPayerId} />
-        {payerError ? <Text style={styles.error}>{payerError}</Text> : null}
+        {payerError ? <Text style={{ color: p.danger }}>{payerError}</Text> : null}
       </Section>
 
-      <Section title="Split">
-        <Chips
-          options={MODES}
-          selected={new Set(splitInputs ? [splitInputs.mode] : [])}
-          onToggle={(id) => update({ mode: id as SplitMode })}
-        />
+      <Section title={t("expense.split")}>
+        <Chips options={modes} selected={new Set(splitInputs ? [splitInputs.mode] : [])} onToggle={(id) => update({ mode: id as SplitMode })} />
         {splitInputs?.mode === "equal" ? (
           <Chips
             options={memberOptions}
@@ -138,7 +157,7 @@ export default function AddExpenseScreen() {
                 key={m.id}
                 label={m.name}
                 value={splitInputs.exactText[m.id] ?? ""}
-                onChangeText={(t) => update({ exactText: { ...splitInputs.exactText, [m.id]: t } })}
+                onChangeText={(text) => update({ exactText: { ...splitInputs.exactText, [m.id]: text } })}
                 placeholder="0.00"
                 keyboardType="decimal-pad"
               />
@@ -146,16 +165,19 @@ export default function AddExpenseScreen() {
           : null}
         {splitInputs?.mode === "exact" && amount !== null ? (
           <Text variant="muted">
-            {formatTetri(exactTotal(splitInputs.exactText), "GEL")} of {formatTetri(amount, "GEL")} assigned
+            {t("expense.assigned", {
+              assigned: formatMoney(exactTotal(splitInputs.exactText), currency, locale),
+              total: formatMoney(amount, currency, locale),
+            })}
           </Text>
         ) : null}
         {splitInputs?.mode === "shares"
           ? members.data?.map((m) => (
               <TextField
                 key={m.id}
-                label={`${m.name} shares`}
+                label={t("expense.sharesFor", { name: m.name })}
                 value={splitInputs.sharesText[m.id] ?? ""}
-                onChangeText={(t) => update({ sharesText: { ...splitInputs.sharesText, [m.id]: t } })}
+                onChangeText={(text) => update({ sharesText: { ...splitInputs.sharesText, [m.id]: text } })}
                 placeholder="1"
                 keyboardType="number-pad"
               />
@@ -164,30 +186,30 @@ export default function AddExpenseScreen() {
       </Section>
 
       {preview?.ok ? (
-        <Section title="Each person owes">
+        <Section title={t("expense.eachOwes")}>
           <View style={styles.preview}>
             {Object.entries(preview.shares)
               .filter(([, share]) => share > 0)
               .map(([id, share]) => (
                 <Text key={id} variant="muted">
-                  {nameOf(id)}: {formatTetri(share, "GEL")}
+                  {nameOf(id)}: {formatMoney(share, currency, locale)}
                 </Text>
               ))}
           </View>
         </Section>
       ) : null}
       {saveError ? (
-        <Text style={styles.error}>{saveError}</Text>
+        <Text style={{ color: p.danger }}>{saveError}</Text>
       ) : preview && !preview.ok && amount !== null ? (
-        <Text variant="muted">{preview.error}</Text>
+        <Text variant="muted">{t(preview.errorKey)}</Text>
       ) : null}
 
-      <Button title="Save expense" onPress={() => void save()} />
+      <Button title={t("expense.save")} icon="checkmark" onPress={() => void save()} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  error: { color: "#9E2A2B" },
+  dateBlock: { gap: spacing.sm },
   preview: { gap: spacing.xs },
 });

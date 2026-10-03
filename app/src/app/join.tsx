@@ -1,13 +1,14 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { StyleSheet } from "react-native";
 import { inviteCodeSchema, type GroupWithMembers, type InvitePreview } from "@tsili/shared";
 import { apiFetch, ApiRequestError } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { notifyDbChanged } from "../db/changes";
 import { useDb } from "../db/DbProvider";
+import { useT } from "../settings/SettingsProvider";
 import { importGroup, syncGroup } from "../sync/engine";
 import { useSync } from "../sync/SyncProvider";
+import { usePalette } from "../theme";
 import { Button } from "../ui/Button";
 import { Chips } from "../ui/Chips";
 import { Screen } from "../ui/Screen";
@@ -20,6 +21,8 @@ export default function JoinScreen() {
   const auth = useAuth();
   const sync = useSync();
   const router = useRouter();
+  const t = useT();
+  const p = usePalette();
   const [code, setCode] = useState("");
   const [preview, setPreview] = useState<InvitePreview | null>(null);
   const [memberId, setMemberId] = useState<string | null>(null);
@@ -30,28 +33,33 @@ export default function JoinScreen() {
   if (auth.status !== "signedIn") {
     return (
       <Screen>
-        <Text>Sign in first so the group knows who you are.</Text>
-        <Button title="Go to account" onPress={() => router.replace("/account")} />
+        <Text>{t("join.signInFirst")}</Text>
+        <Button title={t("join.goToSettings")} icon="settings-outline" onPress={() => router.replace("/settings")} />
       </Screen>
     );
   }
 
   const normalized = code.trim().toUpperCase();
 
+  function describe(err: unknown): string {
+    if (err instanceof ApiRequestError) return err.code === "NETWORK" ? t("join.serverUnreachable") : err.message;
+    return err instanceof Error ? err.message : String(err);
+  }
+
   async function lookUp() {
     setError(null);
     setPreview(null);
     if (!inviteCodeSchema.safeParse(normalized).success) {
-      setError("Codes are 8 letters and digits, like KAZB2326");
+      setError(t("join.codeFormat"));
       return;
     }
     setBusy(true);
     try {
-      const p = await apiFetch<InvitePreview>(`/invites/${normalized}`, { tokens: auth.tokens });
-      setPreview(p);
-      if (p.alreadyMemberId) setMemberId(p.alreadyMemberId);
+      const found = await apiFetch<InvitePreview>(`/invites/${normalized}`, { tokens: auth.tokens });
+      setPreview(found);
+      if (found.alreadyMemberId) setMemberId(found.alreadyMemberId);
     } catch (err) {
-      setError(err instanceof ApiRequestError && err.status === 404 ? "No group has this code" : describe(err));
+      setError(err instanceof ApiRequestError && err.status === 404 ? t("join.notFound") : describe(err));
     } finally {
       setBusy(false);
     }
@@ -60,18 +68,18 @@ export default function JoinScreen() {
   async function join() {
     if (!preview || !auth.user) return;
     setError(null);
-    const body = memberId ? { memberId } : { name: newName.trim() };
     if (!memberId && newName.trim() === "") {
-      setError("Pick your name from the list or type a new one");
+      setError(t("join.pickOrType"));
       return;
     }
     setBusy(true);
     try {
+      const body = memberId ? { memberId } : { name: newName.trim() };
       const data = await apiFetch<GroupWithMembers>(`/invites/${normalized}/join`, { body, tokens: auth.tokens });
       await importGroup(db, data, auth.user.id);
       notifyDbChanged();
       router.replace({ pathname: "/group/[groupId]", params: { groupId: data.group.id } });
-      // Pull expenses in the background; the screen fills in when it lands.
+      // Expenses arrive in the background; the ledger fills in when they land.
       void syncGroup({ db, api: sync.api }, data.group.id).then(notifyDbChanged, () => undefined);
     } catch (err) {
       setError(describe(err));
@@ -82,7 +90,7 @@ export default function JoinScreen() {
   return (
     <Screen>
       <TextField
-        label="Invite code"
+        label={t("join.code")}
         value={code}
         onChangeText={setCode}
         placeholder="KAZB2326"
@@ -91,16 +99,16 @@ export default function JoinScreen() {
         autoFocus
         onSubmitEditing={() => void lookUp()}
       />
-      {!preview ? <Button title={busy ? "Looking up…" : "Look up"} onPress={() => void lookUp()} disabled={busy} /> : null}
+      {!preview ? <Button title={busy ? t("join.lookingUp") : t("join.lookUp")} icon="search-outline" onPress={() => void lookUp()} disabled={busy} /> : null}
       {preview ? (
         <>
-          <Section title="Group">
+          <Section title={t("join.group")}>
             <Text>{preview.group.name}</Text>
           </Section>
           {preview.alreadyMemberId ? (
-            <Text variant="muted">You are already in this group.</Text>
+            <Text variant="muted">{t("join.alreadyMember")}</Text>
           ) : (
-            <Section title="Which one is you?">
+            <Section title={t("join.whichIsYou")}>
               {preview.unclaimedMembers.length > 0 ? (
                 <Chips
                   options={preview.unclaimedMembers.map((m) => ({ id: m.id, label: m.name }))}
@@ -108,24 +116,22 @@ export default function JoinScreen() {
                   onToggle={(id) => setMemberId((cur) => (cur === id ? null : id))}
                 />
               ) : (
-                <Text variant="muted">Nobody has been added for you yet.</Text>
+                <Text variant="muted">{t("join.nobodyYet")}</Text>
               )}
-              {!memberId ? <TextField label="Or join under a new name" value={newName} onChangeText={setNewName} placeholder={auth.user?.displayName ?? "Your name"} /> : null}
+              {!memberId ? (
+                <TextField label={t("join.newName")} value={newName} onChangeText={setNewName} placeholder={auth.user?.displayName ?? ""} />
+              ) : null}
             </Section>
           )}
-          <Button title={busy ? "Joining…" : preview.alreadyMemberId ? "Open group" : "Join"} onPress={() => void join()} disabled={busy} />
+          <Button
+            title={busy ? t("join.joining") : preview.alreadyMemberId ? t("join.open") : t("join.join")}
+            icon="enter-outline"
+            onPress={() => void join()}
+            disabled={busy}
+          />
         </>
       ) : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={{ color: p.danger }}>{error}</Text> : null}
     </Screen>
   );
 }
-
-function describe(err: unknown): string {
-  if (err instanceof ApiRequestError) return err.code === "NETWORK" ? "Cannot reach the server" : err.message;
-  return err instanceof Error ? err.message : String(err);
-}
-
-const styles = StyleSheet.create({
-  error: { color: "#9E2A2B" },
-});

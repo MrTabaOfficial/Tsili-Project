@@ -66,6 +66,12 @@ const MIGRATIONS: string[][] = [
     // Which member in the group is this phone's user; set at creation or when joining.
     `ALTER TABLE groups ADD COLUMN my_member_id TEXT`,
   ],
+  [
+    `CREATE TABLE settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )`,
+  ],
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

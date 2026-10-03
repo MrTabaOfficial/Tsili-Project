@@ -4,6 +4,7 @@ import { notifyDbChanged } from "../../../db/changes";
 import { useDb } from "../../../db/DbProvider";
 import { insertMember } from "../../../db/repo/members";
 import { newId, nowIso } from "../../../lib/ids";
+import { useT } from "../../../settings/SettingsProvider";
 import { Button } from "../../../ui/Button";
 import { Screen } from "../../../ui/Screen";
 import { Text } from "../../../ui/Text";
@@ -13,10 +14,11 @@ export default function AddMemberScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const db = useDb();
   const router = useRouter();
+  const t = useT();
   const [name, setName] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const error = submitted && name.trim() === "" ? "Enter a name" : null;
+  const error = submitted && name.trim() === "" ? t("addMember.nameError") : null;
 
   async function save() {
     setSubmitted(true);
@@ -28,9 +30,9 @@ export default function AddMemberScreen() {
 
   return (
     <Screen>
-      <TextField label="Name" value={name} onChangeText={setName} placeholder="Nino" autoFocus error={error} onSubmitEditing={() => void save()} />
-      <Text variant="muted">They can claim this name later when they join with the invite code.</Text>
-      <Button title="Add" onPress={() => void save()} />
+      <TextField label={t("addMember.name")} value={name} onChangeText={setName} placeholder="Nino" autoFocus error={error} onSubmitEditing={() => void save()} />
+      <Text variant="muted">{t("addMember.hint")}</Text>
+      <Button title={t("common.add")} icon="person-add-outline" onPress={() => void save()} />
     </Screen>
   );
 }

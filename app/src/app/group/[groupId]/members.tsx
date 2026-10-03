@@ -1,12 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Share, StyleSheet, View } from "react-native";
 import { notifyDbChanged } from "../../../db/changes";
 import { useDb } from "../../../db/DbProvider";
 import { deleteGroup, getGroup, renameGroup } from "../../../db/repo/groups";
 import { deleteMember, listMembers } from "../../../db/repo/members";
 import { useQuery } from "../../../db/useQuery";
 import { nowIso } from "../../../lib/ids";
+import { useT } from "../../../settings/SettingsProvider";
+import { radius, spacing, usePalette } from "../../../theme";
+import { Avatar } from "../../../ui/Avatar";
 import { Button } from "../../../ui/Button";
 import { ListRow } from "../../../ui/ListRow";
 import { Screen } from "../../../ui/Screen";
@@ -14,10 +17,12 @@ import { Section } from "../../../ui/Section";
 import { Text } from "../../../ui/Text";
 import { TextField } from "../../../ui/TextField";
 
-export default function MembersScreen() {
+export default function GroupSettingsScreen() {
   const { groupId } = useLocalSearchParams<{ groupId: string }>();
   const db = useDb();
   const router = useRouter();
+  const t = useT();
+  const p = usePalette();
   const group = useQuery((d) => getGroup(d, groupId), [groupId]);
   const members = useQuery((d) => listMembers(d, groupId), [groupId]);
   const [name, setName] = useState("");
@@ -25,6 +30,7 @@ export default function MembersScreen() {
     if (group.data) setName(group.data.name);
   }, [group.data]);
   const nameChanged = group.data !== null && name.trim() !== "" && name.trim() !== group.data?.name;
+  const myId = group.data?.myMemberId ?? null;
 
   async function saveName() {
     if (!nameChanged) return;
@@ -32,22 +38,27 @@ export default function MembersScreen() {
     notifyDbChanged();
   }
 
-  function confirmRemove(id: string, name: string) {
-    Alert.alert("Remove member", `Remove ${name}? Their past expenses stay in the ledger.`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Remove",
-        style: "destructive",
-        onPress: () => void deleteMember(db, id, nowIso()).then(notifyDbChanged),
-      },
+  async function shareCode() {
+    if (!group.data?.inviteCode) return;
+    try {
+      await Share.share({ message: t("members.shareMessage", { name: group.data.name, code: group.data.inviteCode }) });
+    } catch {
+      // The platform has no share sheet (web without navigator.share); the code is visible on screen anyway.
+    }
+  }
+
+  function confirmRemove(id: string, memberName: string) {
+    Alert.alert(t("members.removeTitle"), t("members.removeBody", { name: memberName }), [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("common.remove"), style: "destructive", onPress: () => void deleteMember(db, id, nowIso()).then(notifyDbChanged) },
     ]);
   }
 
   function confirmDeleteGroup() {
-    Alert.alert("Delete group", "This hides the group on this phone and, once synced, for everyone.", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("members.deleteGroup"), t("members.deleteBody"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.delete"),
         style: "destructive",
         onPress: () =>
           void deleteGroup(db, groupId, nowIso()).then(() => {
@@ -60,31 +71,45 @@ export default function MembersScreen() {
 
   return (
     <Screen>
-      <Section title="Group">
-        <TextField label="Name" value={name} onChangeText={setName} onSubmitEditing={() => void saveName()} />
-        {nameChanged ? <Button title="Save name" variant="secondary" onPress={() => void saveName()} /> : null}
+      <Section title={t("members.groupSection")}>
+        <TextField label={t("members.name")} value={name} onChangeText={setName} onSubmitEditing={() => void saveName()} />
+        {nameChanged ? <Button title={t("members.saveName")} icon="checkmark" variant="secondary" onPress={() => void saveName()} /> : null}
         {group.data?.inviteCode ? (
-          <Text variant="muted">Invite code: {group.data.inviteCode}. Others enter it under Join with code.</Text>
+          <View style={[styles.codeCard, { backgroundColor: p.accentSoft }]}>
+            <Text variant="heading">{t("members.inviteCode")}</Text>
+            <Text style={[styles.code, { color: p.text }]}>{group.data.inviteCode}</Text>
+            <Text variant="muted">{t("members.inviteHint")}</Text>
+            <Button title={t("members.share")} icon="share-outline" variant="secondary" onPress={() => void shareCode()} />
+          </View>
         ) : (
-          <Text variant="muted">Sign in and sync to get an invite code for this group.</Text>
+          <Text variant="muted">{t("members.noInviteYet")}</Text>
         )}
       </Section>
-      <Section title="Members" right={<Text variant="muted">{members.data?.length ?? 0}</Text>}>
+
+      <Section title={t("members.section")} right={<Text variant="muted">{members.data?.length ?? 0}</Text>}>
         {members.data?.map((m) => (
           <ListRow
             key={m.id}
-            title={m.name}
-            subtitle={m.userId ? "Joined with their account" : "Not joined yet"}
-            right={<Button title="Remove" variant="danger" onPress={() => confirmRemove(m.id, m.name)} />}
+            title={m.id === myId ? `${m.name} (${t("common.you")})` : m.name}
+            subtitle={m.userId ? t("members.joined") : t("members.notJoined")}
+            left={<Avatar name={m.name} />}
+            right={m.id === myId ? null : <Button title={t("common.remove")} variant="danger" onPress={() => confirmRemove(m.id, m.name)} />}
           />
         ))}
         <Button
-          title="Add member"
+          title={t("members.add")}
+          icon="person-add-outline"
           variant="secondary"
           onPress={() => router.push({ pathname: "/group/[groupId]/add-member", params: { groupId } })}
         />
       </Section>
-      <Button title="Delete group" variant="danger" onPress={confirmDeleteGroup} />
+
+      <Button title={t("members.deleteGroup")} icon="trash-outline" variant="danger" onPress={confirmDeleteGroup} />
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  codeCard: { padding: spacing.md, borderRadius: radius.lg, gap: spacing.sm },
+  code: { fontSize: 32, fontWeight: "700", letterSpacing: 4, fontVariant: ["tabular-nums"] },
+});

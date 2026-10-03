@@ -25,7 +25,7 @@ describe("migrate", () => {
     expect(rows[0]?.user_version).toBe(SCHEMA_VERSION);
     await migrate(db); // second run is a no-op rather than a "table exists" error
     const tables = await db.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name");
-    expect(tables.map((t) => t.name)).toEqual(["expenses", "groups", "members", "repayments", "sync_state"]);
+    expect(tables.map((t) => t.name)).toEqual(["expenses", "groups", "members", "repayments", "settings", "sync_state"]);
   });
 });
 

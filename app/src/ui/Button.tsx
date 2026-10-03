@@ -1,15 +1,19 @@
-import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { radius, spacing, usePalette } from "../theme";
+
+type IconName = keyof typeof Ionicons.glyphMap;
 
 interface Props {
   title: string;
   onPress: () => void;
   variant?: "primary" | "secondary" | "danger";
+  icon?: IconName;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-export function Button({ title, onPress, variant = "primary", disabled = false, style }: Props) {
+export function Button({ title, onPress, variant = "primary", icon, disabled = false, style }: Props) {
   const p = usePalette();
   const colors = {
     primary: { bg: p.accent, fg: p.onAccent, border: p.accent },
@@ -28,7 +32,10 @@ export function Button({ title, onPress, variant = "primary", disabled = false, 
         style,
       ]}
     >
-      <Text style={[styles.label, { color: colors.fg }]}>{title}</Text>
+      <View style={styles.content}>
+        {icon ? <Ionicons name={icon} size={18} color={colors.fg} /> : null}
+        <Text style={[styles.label, { color: colors.fg }]}>{title}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -43,5 +50,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: "center",
   },
+  content: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   label: { fontSize: 16, fontWeight: "600" },
 });

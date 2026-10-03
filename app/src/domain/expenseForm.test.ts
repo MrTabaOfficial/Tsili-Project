@@ -20,7 +20,7 @@ describe("resolveSplit", () => {
     inputs.participants.delete(C);
     expect(resolveSplit(100, inputs)).toMatchObject({ ok: true, shares: { [A]: 50, [B]: 50 } });
     inputs.participants.clear();
-    expect(resolveSplit(100, inputs)).toEqual({ ok: false, error: "Pick at least one person" });
+    expect(resolveSplit(100, inputs)).toEqual({ ok: false, errorKey: "split.error.participants" });
   });
 
   it("exact mode parses decimal text and reports a mismatch", () => {
@@ -29,9 +29,9 @@ describe("resolveSplit", () => {
     inputs.exactText = { [A]: "0.60", [B]: "0,40" };
     expect(resolveSplit(100, inputs)).toMatchObject({ ok: true, shares: { [A]: 60, [B]: 40 } });
     inputs.exactText = { [A]: "0.60", [B]: "0.30" };
-    expect(resolveSplit(100, inputs)).toEqual({ ok: false, error: "The amounts must add up to the total" });
+    expect(resolveSplit(100, inputs)).toEqual({ ok: false, errorKey: "split.error.sum" });
     inputs.exactText = { [A]: "abc", [B]: "1" };
-    expect(resolveSplit(100, inputs)).toEqual({ ok: false, error: "Enter amounts like 12.50" });
+    expect(resolveSplit(100, inputs)).toEqual({ ok: false, errorKey: "split.error.amountFormat" });
   });
 
   it("shares mode uses whole-number weights and skips blanks", () => {
@@ -40,9 +40,9 @@ describe("resolveSplit", () => {
     inputs.sharesText = { [A]: "2", [B]: "1", [C]: "" };
     expect(resolveSplit(90, inputs)).toMatchObject({ ok: true, shares: { [A]: 60, [B]: 30 } });
     inputs.sharesText = { [A]: "1.5", [B]: "1" };
-    expect(resolveSplit(90, inputs)).toEqual({ ok: false, error: "Shares must be whole numbers" });
+    expect(resolveSplit(90, inputs)).toEqual({ ok: false, errorKey: "split.error.wholeShares" });
     inputs.sharesText = { [A]: "0", [B]: "0" };
-    expect(resolveSplit(90, inputs)).toEqual({ ok: false, error: "Give at least one person a share" });
+    expect(resolveSplit(90, inputs)).toEqual({ ok: false, errorKey: "split.error.noShares" });
   });
 });
 

@@ -1,4 +1,5 @@
 import { MoneyError, parseTetri, split, type Shares, type SplitRule } from "@tsili/shared";
+import type { TranslationKey } from "../i18n";
 
 export type SplitMode = "equal" | "exact" | "shares";
 
@@ -13,7 +14,8 @@ export interface SplitInputs {
   sharesText: Record<string, string>;
 }
 
-export type SplitResult = { ok: true; rule: SplitRule; shares: Shares } | { ok: false; error: string };
+export type SplitErrorKey = Extract<TranslationKey, `split.error.${string}`>;
+export type SplitResult = { ok: true; rule: SplitRule; shares: Shares } | { ok: false; errorKey: SplitErrorKey };
 
 export function emptySplitInputs(memberIds: string[]): SplitInputs {
   return {
@@ -30,7 +32,7 @@ export function resolveSplit(amount: number, inputs: SplitInputs): SplitResult {
     const rule = toRule(amount, inputs);
     return { ok: true, rule, shares: split(amount, rule) };
   } catch (err) {
-    if (err instanceof MoneyError) return { ok: false, error: friendly(err) };
+    if (err instanceof MoneyError) return { ok: false, errorKey: errorKeyFor(err) };
     throw err;
   }
 }
@@ -77,19 +79,20 @@ export function exactTotal(exactText: Record<string, string>): number {
   return total;
 }
 
-function friendly(err: MoneyError): string {
+/** Maps shared error codes to translation keys; wording lives in the dictionaries. */
+function errorKeyFor(err: MoneyError): SplitErrorKey {
   switch (err.code) {
     case "EXACT_SUM_MISMATCH":
-      return "The amounts must add up to the total";
+      return "split.error.sum";
     case "NO_PARTICIPANTS":
-      return "Pick at least one person";
+      return "split.error.participants";
     case "NO_SHARES":
-      return "Give at least one person a share";
+      return "split.error.noShares";
     case "NOT_INTEGER":
-      return err.message.startsWith("shares") ? "Shares must be whole numbers" : "Enter amounts like 12.50";
+      return err.message.startsWith("shares") ? "split.error.wholeShares" : "split.error.amountFormat";
     case "NEGATIVE_AMOUNT":
-      return "Amounts cannot be negative";
+      return "split.error.negative";
     default:
-      return err.message;
+      return "split.error.amountFormat";
   }
 }
