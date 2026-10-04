@@ -44,6 +44,15 @@ describe("upgrade", () => {
   });
 });
 
+describe("verifySchema", () => {
+  it("fails loudly when the stored version claims tables that do not exist", async () => {
+    const broken = openNodeDb();
+    await broken.run(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+    await expect(migrate(broken)).rejects.toThrow(/missing: groups, members, expenses, repayments, sync_state, settings/);
+    broken.close();
+  });
+});
+
 describe("groups", () => {
   it("inserts a dirty group with no invite code and lists newest first", async () => {
     const g = await insertGroup(db, { id: G1, name: "Kazbegi", currency: "GEL", now: T0 });

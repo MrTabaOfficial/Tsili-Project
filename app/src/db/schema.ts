@@ -76,6 +76,9 @@ export const MIGRATIONS: readonly (readonly string[])[] = [
 
 export const SCHEMA_VERSION = MIGRATIONS.length;
 
+/** Every table the current code expects. Checked after migrating so a mismatch fails loudly at startup. */
+export const EXPECTED_TABLES = ["groups", "members", "expenses", "repayments", "sync_state", "settings"] as const;
+
 export async function migrate(db: SqlDb): Promise<void> {
   const [row] = await db.all<{ user_version: number }>("PRAGMA user_version");
   let version = row?.user_version ?? 0;
@@ -87,5 +90,18 @@ export async function migrate(db: SqlDb): Promise<void> {
       await db.run(`PRAGMA user_version = ${next}`);
     });
     version = next;
+  }
+  await verifySchema(db, version);
+}
+
+async function verifySchema(db: SqlDb, version: number): Promise<void> {
+  const rows = await db.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table'");
+  const present = new Set(rows.map((r) => r.name));
+  const missing = EXPECTED_TABLES.filter((t) => !present.has(t));
+  if (missing.length > 0) {
+    throw new Error(
+      `Database says schema version ${version} (code expects ${SCHEMA_VERSION}) but tables are missing: ${missing.join(", ")}. ` +
+        "The app is probably running a stale JavaScript bundle; restart the dev server with `npx expo start -c`.",
+    );
   }
 }
