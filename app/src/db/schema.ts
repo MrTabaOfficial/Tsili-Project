@@ -4,7 +4,7 @@ import type { SqlDb } from "./sql";
  * Append a new entry for every schema change; never edit an applied one, because phones in the
  * field have already run it. The index in this array is the version stored in PRAGMA user_version.
  */
-const MIGRATIONS: string[][] = [
+export const MIGRATIONS: readonly (readonly string[])[] = [
   [
     `CREATE TABLE groups (
       id TEXT PRIMARY KEY,

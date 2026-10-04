@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { openNodeDb } from "../node-sqlite";
-import { migrate, SCHEMA_VERSION } from "../schema";
+import { migrate, MIGRATIONS, SCHEMA_VERSION } from "../schema";
 import { deleteGroup, getGroup, insertGroup, listGroups, renameGroup } from "./groups";
 import { deleteMember, insertMember, listMembers, renameMember } from "./members";
 
@@ -26,6 +26,21 @@ describe("migrate", () => {
     await migrate(db); // second run is a no-op rather than a "table exists" error
     const tables = await db.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name");
     expect(tables.map((t) => t.name)).toEqual(["expenses", "groups", "members", "repayments", "settings", "sync_state"]);
+  });
+});
+
+describe("upgrade", () => {
+  it("brings a database left at an older version up to date", async () => {
+    const old = openNodeDb();
+    for (const sql of MIGRATIONS[0]!) await old.run(sql); // a phone that installed the first release
+    await old.run("PRAGMA user_version = 1");
+    await migrate(old);
+    const [{ user_version }] = (await old.all<{ user_version: number }>("PRAGMA user_version")) as [{ user_version: number }];
+    expect(user_version).toBe(SCHEMA_VERSION);
+    const cols = await old.all<{ name: string }>("PRAGMA table_info(groups)");
+    expect(cols.map((c) => c.name)).toContain("my_member_id");
+    expect(await old.all("SELECT * FROM settings")).toEqual([]);
+    old.close();
   });
 });
 

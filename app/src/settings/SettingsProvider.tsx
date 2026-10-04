@@ -28,12 +28,19 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([getSetting(db, THEME_KEY), getSetting(db, LOCALE_KEY)]).then(([theme, locale]) => {
-      if (cancelled) return;
-      if (theme === "light" || theme === "dark" || theme === "system") setTheme(theme);
-      if (locale === "en" || locale === "ka" || locale === "system") setLocale(locale);
-      setLoaded(true);
-    });
+    Promise.all([getSetting(db, THEME_KEY), getSetting(db, LOCALE_KEY)])
+      .then(([theme, locale]) => {
+        if (cancelled) return;
+        if (theme === "light" || theme === "dark" || theme === "system") setTheme(theme);
+        if (locale === "en" || locale === "ka" || locale === "system") setLocale(locale);
+      })
+      .catch((err: unknown) => {
+        // Preferences are a convenience; the app must still open with defaults if they cannot be read.
+        console.warn("settings unavailable, using defaults", err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
     return () => {
       cancelled = true;
     };
