@@ -32,7 +32,7 @@ describe("migrate", () => {
 describe("upgrade", () => {
   it("brings a database left at an older version up to date", async () => {
     const old = openNodeDb();
-    for (const sql of MIGRATIONS[0]!) await old.run(sql); // a phone that installed the first release
+    await MIGRATIONS[0]!(old); // a phone that installed the first release
     await old.run("PRAGMA user_version = 1");
     await migrate(old);
     const [{ user_version }] = (await old.all<{ user_version: number }>("PRAGMA user_version")) as [{ user_version: number }];
@@ -44,12 +44,25 @@ describe("upgrade", () => {
   });
 });
 
-describe("verifySchema", () => {
-  it("fails loudly when the stored version claims tables that do not exist", async () => {
+describe("repair", () => {
+  it("rebuilds missing tables when the stored version is current but the schema is not", async () => {
+    // Seen on a device: user_version persisted as 3 while the settings table never appeared.
     const broken = openNodeDb();
+    await MIGRATIONS[0]!(broken);
+    await MIGRATIONS[1]!(broken);
     await broken.run(`PRAGMA user_version = ${SCHEMA_VERSION}`);
-    await expect(migrate(broken)).rejects.toThrow(/missing: groups, members, expenses, repayments, sync_state, settings/);
+    await migrate(broken);
+    const tables = await broken.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name");
+    expect(tables.map((t) => t.name)).toContain("settings");
     broken.close();
+  });
+
+  it("re-applying every migration on a complete database changes nothing", async () => {
+    for (const m of MIGRATIONS) await m(db);
+    const tables = await db.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name");
+    expect(tables.map((t) => t.name)).toEqual(["expenses", "groups", "members", "repayments", "settings", "sync_state"]);
+    const cols = await db.all<{ name: string }>("PRAGMA table_info(groups)");
+    expect(cols.filter((c) => c.name === "my_member_id")).toHaveLength(1);
   });
 });
 
