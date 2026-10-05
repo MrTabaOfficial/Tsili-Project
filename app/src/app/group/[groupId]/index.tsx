@@ -58,18 +58,15 @@ export default function GroupScreen() {
       {ledger.error ? <Text>{ledger.error.message}</Text> : null}
 
       {L && L.expenses.length > 0 ? (
-        <View style={[styles.hero, { backgroundColor: p.accentSoft }]}>
-          <Text style={[styles.heroTitle, { color: p.text }]}>
-            {mine === null
-              ? t("group.totalSpent", { amount: formatMoney(totalSpent, currency, locale) })
-              : mine > 0
-                ? t("groups.youAreOwed", { amount: formatMoney(mine, currency, locale) })
-                : mine < 0
-                  ? t("groups.youOwe", { amount: formatMoney(-mine, currency, locale) })
-                  : t("groups.settled")}
+        <View style={[styles.hero, { backgroundColor: p.accent }]}>
+          <Text style={[styles.heroLabel, { color: p.onAccent }]}>
+            {mine === null ? t("group.hero.total") : mine > 0 ? t("group.hero.owed") : mine < 0 ? t("group.hero.owe") : t("groups.settled")}
           </Text>
+          {mine === null || mine !== 0 ? (
+            <Text style={[styles.heroAmount, { color: p.gold }]}>{formatMoney(mine === null ? totalSpent : Math.abs(mine), currency, locale)}</Text>
+          ) : null}
           {mine !== null ? (
-            <Text variant="muted">{t("group.totalSpent", { amount: formatMoney(totalSpent, currency, locale) })}</Text>
+            <Text style={[styles.heroFoot, { color: p.onAccent }]}>{t("group.totalSpent", { amount: formatMoney(totalSpent, currency, locale) })}</Text>
           ) : null}
         </View>
       ) : null}
@@ -146,7 +143,7 @@ export default function GroupScreen() {
           >
             <ListRow
               title={e.description}
-              subtitle={`${t("group.paidBy", { payer: nameOf(e.payerMemberId) })} · ${formatDate(e.date, locale, t)}`}
+              subtitle={`${t("group.paidBy", { payer: nameOf(e.payerMemberId) })}, ${formatDate(e.date, locale, t)}`}
               left={<Avatar name={nameOf(e.payerMemberId)} />}
               right={<Money amount={e.amount} currency={currency} />}
             />
@@ -160,7 +157,7 @@ export default function GroupScreen() {
             <ListRow
               key={r.id}
               title={t("group.paidTo", { from: nameOf(r.fromMemberId), to: nameOf(r.toMemberId) })}
-              subtitle={r.note ? `${r.note} · ${formatDate(r.date, locale, t)}` : formatDate(r.date, locale, t)}
+              subtitle={r.note ? `${r.note}, ${formatDate(r.date, locale, t)}` : formatDate(r.date, locale, t)}
               left={<Avatar name={nameOf(r.fromMemberId)} />}
               right={<Money amount={r.amount} currency={currency} />}
             />
@@ -172,8 +169,10 @@ export default function GroupScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: { padding: spacing.lg, borderRadius: radius.xl, gap: spacing.xs },
-  heroTitle: { fontSize: 24, fontWeight: "700", letterSpacing: -0.3 },
+  hero: { padding: spacing.lg, borderRadius: radius.hero, gap: spacing.xs },
+  heroLabel: { fontSize: 15, fontWeight: "500", opacity: 0.85 },
+  heroAmount: { fontSize: 36, fontWeight: "800", letterSpacing: -1, fontVariant: ["tabular-nums"] },
+  heroFoot: { fontSize: 14, opacity: 0.8, marginTop: spacing.xs },
   inline: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   actions: { flexDirection: "row", gap: spacing.sm },
   flex: { flex: 1 },

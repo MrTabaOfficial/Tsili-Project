@@ -17,6 +17,7 @@ import { Button } from "../../../ui/Button";
 import { Chips } from "../../../ui/Chips";
 import { Screen } from "../../../ui/Screen";
 import { Section } from "../../../ui/Section";
+import { SegmentedControl, type Segment } from "../../../ui/SegmentedControl";
 import { Text } from "../../../ui/Text";
 import { TextField } from "../../../ui/TextField";
 
@@ -63,7 +64,7 @@ export default function AddExpenseScreen() {
   const payerError = submitted && !payerId ? t("expense.error.payer") : null;
   const dateError = submitted && !dateOnlySchema.safeParse(date).success ? t("expense.error.date") : null;
 
-  const modes: { id: SplitMode; label: string }[] = [
+  const modes: Segment<SplitMode>[] = [
     { id: "equal", label: t("expense.split.equal") },
     { id: "exact", label: t("expense.split.exact") },
     { id: "shares", label: t("expense.split.shares") },
@@ -138,7 +139,7 @@ export default function AddExpenseScreen() {
       </Section>
 
       <Section title={t("expense.split")}>
-        <Chips options={modes} selected={new Set(splitInputs ? [splitInputs.mode] : [])} onToggle={(id) => update({ mode: id as SplitMode })} />
+        <SegmentedControl segments={modes} value={splitInputs?.mode ?? "equal"} onChange={(id) => update({ mode: id })} />
         {splitInputs?.mode === "equal" ? (
           <Chips
             options={memberOptions}

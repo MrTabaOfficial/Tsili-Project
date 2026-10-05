@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
-import { radius, spacing, usePalette } from "../theme";
+import { radius, spacing, type as typeScale, usePalette } from "../theme";
 
 interface Props extends Omit<TextInputProps, "style"> {
   label: string;
@@ -14,10 +14,7 @@ export function TextField({ label, error, ...input }: Props) {
       <TextInput
         placeholderTextColor={p.muted}
         {...input}
-        style={[
-          styles.input,
-          { color: p.text, backgroundColor: p.surface, borderColor: error ? p.danger : p.border },
-        ]}
+        style={[styles.input, { color: p.text, backgroundColor: p.surface, borderColor: error ? p.danger : p.border }]}
       />
       {error ? <Text style={[styles.error, { color: p.danger }]}>{error}</Text> : null}
     </View>
@@ -25,15 +22,15 @@ export function TextField({ label, error, ...input }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: spacing.xs },
-  label: { fontSize: 13, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
+  wrap: { gap: 6 },
+  label: { ...typeScale.caption, paddingHorizontal: spacing.xs },
   input: {
     fontSize: 17,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 4,
+    paddingVertical: spacing.sm + 5,
     borderWidth: 1,
-    borderRadius: radius.md,
-    minHeight: 48,
+    borderRadius: radius.field,
+    minHeight: 50,
   },
-  error: { fontSize: 13 },
+  error: { ...typeScale.caption, paddingHorizontal: spacing.xs },
 });

@@ -63,7 +63,7 @@ export default function GroupsScreen() {
           <Link key={group.id} href={{ pathname: "/group/[groupId]", params: { groupId: group.id } }} asChild>
             <ListRow
               title={group.name}
-              subtitle={`${t("groups.members", { n: memberCount })} · ${group.inviteCode ?? t("groups.notSynced")}`}
+              subtitle={`${t("groups.members", { n: memberCount })}, ${group.inviteCode ?? t("groups.notSynced")}`}
               left={<Avatar name={group.name} size={40} />}
               right={mine !== null && mine !== 0 ? <Money amount={mine} currency={group.currency} signed /> : null}
             />

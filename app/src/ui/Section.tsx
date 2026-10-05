@@ -16,6 +16,6 @@ export function Section({ title, right, children }: { title: string; right?: Rea
 }
 
 const styles = StyleSheet.create({
-  section: { gap: spacing.sm },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
+  section: { gap: spacing.sm, marginTop: spacing.sm },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingHorizontal: spacing.xs },
 });

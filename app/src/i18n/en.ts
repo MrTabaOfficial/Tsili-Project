@@ -20,7 +20,7 @@ export const en = {
   "groups.new": "New group",
   "groups.join": "Join with code",
   "groups.signInHint": "Sign in to sync with other phones.",
-  "groups.notSynced": "Not synced yet",
+  "groups.notSynced": "not synced yet",
   "groups.members": "{n} members",
   "groups.youAreOwed": "You are owed {amount}",
   "groups.youOwe": "You owe {amount}",
@@ -55,6 +55,9 @@ export const en = {
   "group.notFound.title": "Group not found",
   "group.notFound.hint": "It may have been deleted.",
   "group.totalSpent": "Total spent {amount}",
+  "group.hero.owed": "You are owed",
+  "group.hero.owe": "You owe",
+  "group.hero.total": "Total spent",
   "group.settings": "Group settings",
 
   // Group settings / members
@@ -142,7 +145,7 @@ export const en = {
   "settings.theme.light": "Light",
   "settings.theme.dark": "Dark",
   "settings.language": "Language",
-  "settings.language.system": "Device language",
+  "settings.language.system": "Auto",
   "settings.sync": "Sync",
   "settings.syncNow": "Sync now",
   "settings.syncing": "Syncing…",

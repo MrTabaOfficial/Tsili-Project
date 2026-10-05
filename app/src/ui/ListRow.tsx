@@ -10,10 +10,11 @@ interface Props {
   onPress?: (() => void) | undefined;
 }
 
+/** A quiet card: hairline border, no shadow. Colour is reserved for the hero and the primary action. */
 export function ListRow({ title, subtitle, left, right, onPress }: Props) {
   const p = usePalette();
   const body = (
-    <View style={[styles.row, { backgroundColor: p.surface, borderColor: p.border, shadowColor: p.shadow }]}>
+    <View style={[styles.row, { backgroundColor: p.surface, borderColor: p.border }]}>
       {left}
       <View style={styles.text}>
         <Text style={[styles.title, { color: p.text }]} numberOfLines={1}>
@@ -42,15 +43,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 6,
+    paddingVertical: spacing.md - 2,
     borderWidth: 1,
-    borderRadius: radius.md,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 1,
-    shadowRadius: 2,
-    elevation: 1,
+    borderRadius: radius.card,
   },
   text: { flex: 1, gap: 2 },
-  title: { fontSize: 17, fontWeight: "500" },
+  title: { fontSize: 16, fontWeight: "600" },
   subtitle: { fontSize: 14 },
 });

@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { radius, spacing, usePalette } from "../theme";
+import { radius, spacing, type as typeScale, usePalette } from "../theme";
 
 export interface ChipOption {
   id: string;
@@ -12,7 +13,7 @@ interface Props {
   onToggle: (id: string) => void;
 }
 
-/** Wrapping row of toggle chips. Works for single selection when the caller replaces the set. */
+/** Picking people. Selected chips fill with the accent and show a check, so the state is never ambiguous. */
 export function Chips({ options, selected, onToggle }: Props) {
   const p = usePalette();
   return (
@@ -22,14 +23,12 @@ export function Chips({ options, selected, onToggle }: Props) {
         return (
           <Pressable
             key={o.id}
-            accessibilityRole="button"
-            accessibilityState={{ selected: on }}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: on }}
             onPress={() => onToggle(o.id)}
-            style={[
-              styles.chip,
-              { backgroundColor: on ? p.accent : p.surface, borderColor: on ? p.accent : p.border },
-            ]}
+            style={[styles.chip, { backgroundColor: on ? p.accent : p.surface, borderColor: on ? p.accent : p.border }]}
           >
+            {on ? <Ionicons name="checkmark" size={16} color={p.onAccent} /> : null}
             <Text style={[styles.label, { color: on ? p.onAccent : p.text }]}>{o.label}</Text>
           </Pressable>
         );
@@ -41,12 +40,14 @@ export function Chips({ options, selected, onToggle }: Props) {
 const styles = StyleSheet.create({
   row: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.lg,
+    borderRadius: radius.control,
     borderWidth: 1,
     minHeight: 40,
-    justifyContent: "center",
   },
-  label: { fontSize: 15, fontWeight: "500" },
+  label: { ...typeScale.body, fontSize: 15, fontWeight: "500" },
 });

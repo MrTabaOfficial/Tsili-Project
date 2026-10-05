@@ -3,21 +3,17 @@ import { StyleSheet, View } from "react-native";
 import { loginRequestSchema, registerRequestSchema } from "@tsili/shared";
 import { ApiRequestError } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
-import { LOCALES, type LocalePreference } from "../i18n";
+import { type LocalePreference } from "../i18n";
 import { useSettings, useT } from "../settings/SettingsProvider";
 import { describeSync } from "../sync/describeSync";
 import { useSync } from "../sync/SyncProvider";
-import { spacing, usePalette, type ThemePreference } from "../theme";
+import { radius, spacing, usePalette, type ThemePreference } from "../theme";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
-import { Chips } from "../ui/Chips";
-import { ListRow } from "../ui/ListRow";
 import { Screen } from "../ui/Screen";
-import { Section } from "../ui/Section";
+import { SegmentedControl, type Segment } from "../ui/SegmentedControl";
 import { Text } from "../ui/Text";
 import { TextField } from "../ui/TextField";
-
-const LANGUAGE_LABELS: Record<(typeof LOCALES)[number], string> = { en: "English", ka: "ქართული" };
 
 export default function SettingsScreen() {
   const auth = useAuth();
@@ -26,39 +22,46 @@ export default function SettingsScreen() {
   const t = useT();
   const p = usePalette();
 
-  const themeOptions: { id: ThemePreference; label: string }[] = [
-    { id: "system", label: t("settings.theme.system") },
-    { id: "light", label: t("settings.theme.light") },
-    { id: "dark", label: t("settings.theme.dark") },
+  const themeSegments: Segment<ThemePreference>[] = [
+    { id: "system", label: t("settings.theme.system"), icon: "phone-portrait-outline" },
+    { id: "light", label: t("settings.theme.light"), icon: "sunny-outline" },
+    { id: "dark", label: t("settings.theme.dark"), icon: "moon-outline" },
   ];
-  const languageOptions: { id: LocalePreference; label: string }[] = [
+  const languageSegments: Segment<LocalePreference>[] = [
     { id: "system", label: t("settings.language.system") },
-    ...LOCALES.map((id) => ({ id, label: LANGUAGE_LABELS[id] })),
+    { id: "en", label: "English" },
+    { id: "ka", label: "ქართული" },
   ];
 
   return (
     <Screen>
-      <Section title={t("settings.account")}>
+      <Card title={t("settings.account")}>
         {auth.status === "signedIn" && auth.user ? (
           <>
-            <ListRow title={auth.user.displayName} subtitle={auth.user.email} left={<Avatar name={auth.user.displayName} />} />
-            <Button title={t("settings.signOut")} variant="danger" icon="log-out-outline" onPress={() => void auth.signOut()} />
+            <View style={styles.identity}>
+              <Avatar name={auth.user.displayName} size={44} />
+              <View style={styles.flex}>
+                <Text variant="heading">{auth.user.displayName}</Text>
+                <Text variant="muted">{auth.user.email}</Text>
+              </View>
+            </View>
+            <Button title={t("settings.signOut")} variant="secondary" icon="log-out-outline" onPress={() => void auth.signOut()} />
           </>
         ) : (
           <AuthForm />
         )}
-      </Section>
+      </Card>
 
-      <Section title={t("settings.appearance")}>
-        <Chips options={themeOptions} selected={new Set([settings.themePreference])} onToggle={(id) => void settings.setThemePreference(id as ThemePreference)} />
-      </Section>
+      <Card title={t("settings.appearance")}>
+        <SegmentedControl segments={themeSegments} value={settings.themePreference} onChange={(id) => void settings.setThemePreference(id)} />
+      </Card>
 
-      <Section title={t("settings.language")}>
-        <Chips options={languageOptions} selected={new Set([settings.localePreference])} onToggle={(id) => void settings.setLocalePreference(id as LocalePreference)} />
-      </Section>
+      <Card title={t("settings.language")}>
+        <SegmentedControl segments={languageSegments} value={settings.localePreference} onChange={(id) => void settings.setLocalePreference(id)} />
+      </Card>
 
       {auth.status === "signedIn" ? (
-        <Section title={t("settings.sync")}>
+        <Card title={t("settings.sync")}>
           <Text variant="muted">{describeSync(sync.status, t)}</Text>
           {sync.status.rejected.map((r, i) => (
             <Text key={`${r.id ?? "?"}-${i}`} style={{ color: p.danger }}>
@@ -72,9 +75,20 @@ export default function SettingsScreen() {
             onPress={() => void sync.syncNow()}
             disabled={sync.status.running}
           />
-        </Section>
+        </Card>
       ) : null}
     </Screen>
+  );
+}
+
+/** Settings live in cards, one topic each, with the control directly under the title. */
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  const p = usePalette();
+  return (
+    <View style={[styles.card, { backgroundColor: p.surface, borderColor: p.border }]}>
+      <Text variant="heading">{title}</Text>
+      {children}
+    </View>
   );
 }
 
@@ -125,13 +139,13 @@ function AuthForm() {
 
   return (
     <View style={styles.form}>
-      <Chips
-        options={[
+      <SegmentedControl<Mode>
+        segments={[
           { id: "signIn", label: t("settings.signIn") },
           { id: "register", label: t("settings.createAccount") },
         ]}
-        selected={new Set([mode])}
-        onToggle={(id) => setMode(id as Mode)}
+        value={mode}
+        onChange={setMode}
       />
       {mode === "register" ? (
         <TextField label={t("settings.yourName")} value={displayName} onChangeText={setDisplayName} placeholder="Luka" error={fieldErrors.displayName} />
@@ -162,11 +176,14 @@ function AuthForm() {
         onPress={() => void submit()}
         disabled={busy}
       />
-      <Text variant="muted">{t("settings.offlineNote")}</Text>
+      <Text variant="caption">{t("settings.offlineNote")}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  card: { padding: spacing.md, borderRadius: radius.card, borderWidth: 1, gap: spacing.md },
+  identity: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  flex: { flex: 1 },
   form: { gap: spacing.md },
 });

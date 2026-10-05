@@ -76,8 +76,8 @@ export default function GroupSettingsScreen() {
         {nameChanged ? <Button title={t("members.saveName")} icon="checkmark" variant="secondary" onPress={() => void saveName()} /> : null}
         {group.data?.inviteCode ? (
           <View style={[styles.codeCard, { backgroundColor: p.accentSoft }]}>
-            <Text variant="heading">{t("members.inviteCode")}</Text>
-            <Text style={[styles.code, { color: p.text }]}>{group.data.inviteCode}</Text>
+            <Text variant="caption">{t("members.inviteCode")}</Text>
+            <Text style={[styles.code, { color: p.accent }]}>{group.data.inviteCode}</Text>
             <Text variant="muted">{t("members.inviteHint")}</Text>
             <Button title={t("members.share")} icon="share-outline" variant="secondary" onPress={() => void shareCode()} />
           </View>
@@ -110,6 +110,6 @@ export default function GroupSettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  codeCard: { padding: spacing.md, borderRadius: radius.lg, gap: spacing.sm },
+  codeCard: { padding: spacing.md, borderRadius: radius.card, gap: spacing.sm },
   code: { fontSize: 32, fontWeight: "700", letterSpacing: 4, fontVariant: ["tabular-nums"] },
 });

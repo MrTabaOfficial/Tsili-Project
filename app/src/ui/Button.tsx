@@ -28,13 +28,15 @@ export function Button({ title, onPress, variant = "primary", icon, disabled = f
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
-        { backgroundColor: colors.bg, borderColor: colors.border, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 },
+        { backgroundColor: colors.bg, borderColor: colors.border, opacity: disabled ? 0.5 : pressed ? 0.85 : 1 },
         style,
       ]}
     >
       <View style={styles.content}>
         {icon ? <Ionicons name={icon} size={18} color={colors.fg} /> : null}
-        <Text style={[styles.label, { color: colors.fg }]}>{title}</Text>
+        <Text numberOfLines={1} style={[styles.label, { color: colors.fg }]}>
+          {title}
+        </Text>
       </View>
     </Pressable>
   );
@@ -42,12 +44,12 @@ export function Button({ title, onPress, variant = "primary", icon, disabled = f
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: spacing.sm + 4,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
+    paddingVertical: spacing.sm + 5,
+    paddingHorizontal: spacing.md + 2,
+    borderRadius: radius.control,
     borderWidth: 1,
     alignItems: "center",
-    minHeight: 44,
+    minHeight: 46,
     justifyContent: "center",
   },
   content: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
