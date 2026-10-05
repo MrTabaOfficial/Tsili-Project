@@ -125,6 +125,8 @@ export const ka: Record<TranslationKey, string> = {
   "repayment.error.to": "ვინ მიიღო?",
   "repayment.error.amount": "შეიყვანე თანხა, მაგ. 40",
 
+  "account.title": "ანგარიში",
+  "account.intro": "შედი ანგარიშში, რომ ჯგუფები ტელეფონებს შორის დასინქრონდეს და მოსაწვევი კოდები გააზიარო.",
   "settings.title": "პარამეტრები",
   "settings.account": "ანგარიში",
   "settings.signIn": "შესვლა",
@@ -154,7 +156,7 @@ export const ka: Record<TranslationKey, string> = {
 
   "join.title": "ჯგუფში შეერთება",
   "join.signInFirst": "ჯერ შედი ანგარიშში, რომ ჯგუფმა იცოდეს, ვინ ხარ.",
-  "join.goToSettings": "პარამეტრებზე გადასვლა",
+  "join.goToSettings": "ანგარიშზე გადასვლა",
   "join.code": "მოსაწვევი კოდი",
   "join.lookUp": "მოძებნა",
   "join.lookingUp": "იძებნება…",

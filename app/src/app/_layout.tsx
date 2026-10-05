@@ -43,6 +43,7 @@ function Shell() {
       >
         <Stack.Screen name="index" options={{ title: t("groups.title") }} />
         <Stack.Screen name="settings" options={{ title: t("settings.title"), presentation: "modal" }} />
+        <Stack.Screen name="account" options={{ title: t("account.title"), presentation: "modal" }} />
         <Stack.Screen name="join" options={{ title: t("join.title"), presentation: "modal" }} />
         <Stack.Screen name="new-group" options={{ title: t("newGroup.title"), presentation: "modal" }} />
         <Stack.Screen name="group/[groupId]/index" options={{ title: "" }} />

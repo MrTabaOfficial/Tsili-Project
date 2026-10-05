@@ -34,7 +34,7 @@ export default function JoinScreen() {
     return (
       <Screen>
         <Text>{t("join.signInFirst")}</Text>
-        <Button title={t("join.goToSettings")} icon="settings-outline" onPress={() => router.replace("/settings")} />
+        <Button title={t("join.goToSettings")} icon="person-circle-outline" onPress={() => router.replace("/account")} />
       </Screen>
     );
   }

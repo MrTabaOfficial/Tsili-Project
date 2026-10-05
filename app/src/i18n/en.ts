@@ -130,6 +130,8 @@ export const en = {
   "repayment.error.amount": "Enter an amount like 40",
 
   // Settings / account
+  "account.title": "Account",
+  "account.intro": "Sign in to sync your groups between phones and share invite codes.",
   "settings.title": "Settings",
   "settings.account": "Account",
   "settings.signIn": "Sign in",
@@ -160,7 +162,7 @@ export const en = {
   // Join
   "join.title": "Join a group",
   "join.signInFirst": "Sign in first so the group knows who you are.",
-  "join.goToSettings": "Go to settings",
+  "join.goToSettings": "Go to account",
   "join.code": "Invite code",
   "join.lookUp": "Look up",
   "join.lookingUp": "Looking up…",

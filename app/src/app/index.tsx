@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Link, Stack, useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { useAuth } from "../auth/AuthProvider";
@@ -8,7 +9,7 @@ import { loadLedger } from "../domain/useLedger";
 import { useT } from "../settings/SettingsProvider";
 import { describeSync } from "../sync/describeSync";
 import { useSync } from "../sync/SyncProvider";
-import { spacing } from "../theme";
+import { spacing, usePalette } from "../theme";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
@@ -42,6 +43,7 @@ async function loadCards(db: SqlDb): Promise<GroupCard[]> {
 export default function GroupsScreen() {
   const router = useRouter();
   const t = useT();
+  const p = usePalette();
   const auth = useAuth();
   const sync = useSync();
   const cards = useQuery(loadCards, []);
@@ -50,10 +52,24 @@ export default function GroupsScreen() {
     <Screen>
       <Stack.Screen
         options={{
-          headerRight: () => <IconButton icon="settings-outline" label={t("settings.title")} onPress={() => router.push("/settings")} />,
+          headerRight: () => (
+            <View style={styles.headerButtons}>
+              <IconButton icon="person-circle-outline" label={t("account.title")} onPress={() => router.push("/account")} />
+              <IconButton icon="settings-outline" label={t("settings.title")} onPress={() => router.push("/settings")} />
+            </View>
+          ),
         }}
       />
-      <Text variant="muted">{auth.status === "signedIn" ? describeSync(sync.status, t) : t("groups.signInHint")}</Text>
+      {auth.status === "signedIn" ? (
+        <Text variant="muted">{describeSync(sync.status, t)}</Text>
+      ) : (
+        <ListRow
+          title={t("settings.signIn")}
+          subtitle={t("groups.signInHint")}
+          left={<Ionicons name="person-circle-outline" size={28} color={p.accent} />}
+          onPress={() => router.push("/account")}
+        />
+      )}
       {cards.error ? <Text>{cards.error.message}</Text> : null}
       {cards.data && cards.data.length === 0 ? (
         <EmptyState icon="people-outline" title={t("groups.empty.title")} hint={t("groups.empty.hint")} />
@@ -79,6 +95,7 @@ export default function GroupsScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerButtons: { flexDirection: "row" },
   list: { gap: spacing.sm },
   actions: { flexDirection: "row", gap: spacing.sm },
   flex: { flex: 1 },
