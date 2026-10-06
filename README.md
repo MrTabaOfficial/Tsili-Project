@@ -136,6 +136,16 @@ npm run start -w app                 # scan the QR code with Expo Go
 
 The phone must be on the same Wi-Fi as the computer, and Windows Firewall must allow inbound connections on port 4000. The app does everything locally without the server; signing in enables sync and invite codes.
 
+### Development build
+
+Expo Go is enough to try the app, but it is a generic shell. A development build is Tsili's own native shell with exactly its modules compiled in, which is also what a release is made from. With the Android SDK and a JDK installed and a device or emulator connected:
+
+```sh
+npm run android:dev -w app       # compiles the native project and installs it, then start Metro as usual
+```
+
+The generated `android/` folder is a build artefact and is not committed. Without a local SDK, the same build runs in Expo's cloud: `npx eas-cli build --profile development --platform android` from `app/`, using the profiles in `app/eas.json`.
+
 Tests and checks:
 
 ```sh
@@ -146,6 +156,6 @@ npm run bundle:check -w app   # Metro bundle for Android; catches import and con
 
 ## Status
 
-Everything above is implemented and tested. Next steps, roughly in order: a development build instead of Expo Go, a native date picker, invite links that open the app directly, continuous integration, and pagination of the sync pull for very large groups.
+Everything above is implemented and tested, and CI runs it on every push. Next steps, roughly in order: invite links that open the app directly, a native date picker, and pagination of the sync pull for very large groups.
 
 Known limits kept on purpose for now: conflicts are resolved by device clock, one currency per group, and the web build used for automated checks cannot survive a same-tab reload because expo-sqlite's web storage holds an exclusive lock.
