@@ -37,7 +37,7 @@ export function createApp({ env, db, logger, now }: AppDeps): Express {
   app.get("/health", (_req, res) => {
     res.json({ ok: true });
   });
-  app.use(authRouter(auth, tokens));
+  app.use(authRouter(auth, tokens, { rateLimitMax: env.AUTH_RATE_LIMIT_MAX }));
   app.use(groupsRouter(groups, tokens));
   app.use(syncRouter(sync, tokens));
 

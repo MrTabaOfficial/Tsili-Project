@@ -193,6 +193,21 @@ describe("POST /auth/logout", () => {
   });
 });
 
+describe("rate limiting", () => {
+  it("blocks repeated login attempts from one address with 429", async () => {
+    const env = loadEnv();
+    const limited = createApp({ env: { ...env, AUTH_RATE_LIMIT_MAX: 2 }, db, logger: pino({ level: "silent" }) });
+    await registerLuka();
+    const attempt = () => request(limited).post("/auth/login").send({ email: credentials.email, password: "wrong password" });
+    expect((await attempt()).status).toBe(401);
+    expect((await attempt()).status).toBe(401);
+    const third = await attempt();
+    expect(third.status).toBe(429);
+    expect(third.body.error.code).toBe("RATE_LIMITED");
+    expect(third.headers["retry-after"]).toBeDefined();
+  });
+});
+
 describe("unknown routes", () => {
   it("return a JSON 404", async () => {
     const res = await request(app).get("/nope");

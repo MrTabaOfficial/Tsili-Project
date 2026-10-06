@@ -6,6 +6,8 @@ const testEnv = {
   DATABASE_URL: process.env.DATABASE_URL_TEST ?? "postgresql://tsili:tsili@localhost:5432/tsili_test",
   JWT_SECRET: "test-secret-test-secret-test-secret-test-secret",
   LOG_LEVEL: "silent",
+  // The suite signs up many users from one address; the limiter is tested separately with a tiny limit.
+  AUTH_RATE_LIMIT_MAX: "100000",
 };
 
 export default defineConfig({
