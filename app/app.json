@@ -28,6 +28,7 @@
     ],
     "experiments": {
       "typedRoutes": false
-    }
+    },
+    "backgroundColor": "#F2F4F7"
   }
 }

@@ -1,3 +1,4 @@
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -28,8 +29,14 @@ function Shell() {
   const p = usePalette();
   const scheme = useScheme();
   const t = useT();
+  // The navigator paints its theme background under screens while they animate; without this it is white.
+  const base = scheme === "dark" ? DarkTheme : DefaultTheme;
+  const navTheme = {
+    ...base,
+    colors: { ...base.colors, background: p.background, card: p.background, text: p.text, primary: p.accent, border: p.border },
+  };
   return (
-    <>
+    <ThemeProvider value={navTheme}>
       <StatusBar style={scheme === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{
@@ -53,6 +60,6 @@ function Shell() {
         <Stack.Screen name="group/[groupId]/add-repayment" options={{ title: t("repayment.title"), presentation: "modal" }} />
         <Stack.Screen name="group/[groupId]/expense/[expenseId]" options={{ title: "" }} />
       </Stack>
-    </>
+    </ThemeProvider>
   );
 }

@@ -2,6 +2,7 @@ import { getLocales } from "expo-localization";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { detectLocale, translate } from "../i18n";
+import { usePalette } from "../theme";
 import { openExpoDb } from "./expo-sqlite";
 import { migrate } from "./schema";
 import type { SqlDb } from "./sql";
@@ -11,6 +12,7 @@ const DbContext = createContext<SqlDb | null>(null);
 export function DbProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<SqlDb | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const p = usePalette();
 
   useEffect(() => {
     let cancelled = false;
@@ -31,16 +33,16 @@ export function DbProvider({ children }: { children: ReactNode }) {
     // Stored preferences are unreachable here, so the device language decides.
     const locale = detectLocale(getLocales()[0]?.languageCode);
     return (
-      <View style={styles.center}>
-        <Text style={styles.error}>{translate(locale, "db.openFailed")}</Text>
-        <Text style={styles.detail}>{error}</Text>
+      <View style={[styles.center, { backgroundColor: p.background }]}>
+        <Text style={[styles.error, { color: p.text }]}>{translate(locale, "db.openFailed")}</Text>
+        <Text style={[styles.detail, { color: p.muted }]}>{error}</Text>
       </View>
     );
   }
   if (!db) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator />
+      <View style={[styles.center, { backgroundColor: p.background }]}>
+        <ActivityIndicator color={p.accent} />
       </View>
     );
   }
