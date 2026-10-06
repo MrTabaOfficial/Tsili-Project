@@ -71,7 +71,24 @@ export default function GroupScreen() {
         </View>
       ) : null}
 
+      {L && L.expenses.length === 0 ? (
+        <View style={[styles.start, { backgroundColor: p.surface, borderColor: p.border }]}>
+          <Text variant="heading">{t("group.start.title")}</Text>
+          {[
+            { icon: "people-outline" as const, text: t("group.start.members"), done: L.members.length > 1 },
+            { icon: "receipt-outline" as const, text: t("group.start.expense"), done: false },
+            { icon: "swap-horizontal-outline" as const, text: t("group.start.settle"), done: false },
+          ].map((step) => (
+            <View key={step.text} style={styles.step}>
+              <Ionicons name={step.done ? "checkmark-circle" : step.icon} size={22} color={step.done ? p.success : p.accent} />
+              <Text style={styles.flex}>{step.text}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
       <Section title={t("group.balances")}>
+        <Text variant="caption">{t("group.balancesHint")}</Text>
         {L?.members.map((m) => (
           <ListRow
             key={m.id}
@@ -83,6 +100,7 @@ export default function GroupScreen() {
       </Section>
 
       <Section title={t("group.settleUp")}>
+        {L && L.plan.length > 0 ? <Text variant="caption">{t("group.settleHint")}</Text> : null}
         {L && L.plan.length === 0 && L.expenses.length > 0 ? (
           <View style={styles.inline}>
             <Ionicons name="checkmark-circle" size={20} color={p.success} />
@@ -160,6 +178,7 @@ export default function GroupScreen() {
               subtitle={r.note ? `${r.note}, ${formatDate(r.date, locale, t)}` : formatDate(r.date, locale, t)}
               left={<Avatar name={nameOf(r.fromMemberId)} />}
               right={<Money amount={r.amount} currency={currency} />}
+              onPress={() => router.push({ pathname: "/group/[groupId]/add-repayment", params: { groupId, repaymentId: r.id } })}
             />
           ))}
         </Section>
@@ -169,6 +188,8 @@ export default function GroupScreen() {
 }
 
 const styles = StyleSheet.create({
+  start: { padding: spacing.md, borderRadius: radius.card, borderWidth: 1, gap: spacing.md },
+  step: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   hero: { padding: spacing.lg, borderRadius: radius.hero, gap: spacing.xs },
   heroLabel: { fontSize: 15, fontWeight: "500", opacity: 0.85 },
   heroAmount: { fontSize: 36, fontWeight: "800", letterSpacing: -1, fontVariant: ["tabular-nums"] },

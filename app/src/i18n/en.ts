@@ -33,6 +33,7 @@ export const en = {
   "newGroup.yourName": "Your name",
   "newGroup.nameError": "Give the group a name",
   "newGroup.yourNameError": "Add yourself as the first member",
+  "newGroup.yourNameHint": "How you appear in this group's balances.",
   "newGroup.currencyNote": "Currency: GEL. Everyone in the group shares one currency.",
   "newGroup.create": "Create group",
   "newGroup.saving": "Saving…",
@@ -59,6 +60,12 @@ export const en = {
   "group.hero.owe": "You owe",
   "group.hero.total": "Total spent",
   "group.settings": "Group settings",
+  "group.balancesHint": "Plus: the group owes them. Minus: they owe the group.",
+  "group.settleHint": "The fewest payments that clear every balance.",
+  "group.start.title": "Getting started",
+  "group.start.members": "Add the people who share the costs",
+  "group.start.expense": "Add the first expense, with who paid and how to split it",
+  "group.start.settle": "When it is time, Settle up shows who pays whom",
 
   // Group settings / members
   "members.title": "Group settings",
@@ -100,6 +107,9 @@ export const en = {
   "expense.eachOwes": "Each person owes",
   "expense.assigned": "{assigned} of {total} assigned",
   "expense.save": "Save expense",
+  "expense.editTitle": "Edit expense",
+  "expense.edit": "Edit",
+  "expense.saveChanges": "Save changes",
   "expense.delete": "Delete expense",
   "expense.deleteBody": "Balances will be recalculated without it.",
   "expense.notFound.title": "Expense not found",
@@ -121,6 +131,9 @@ export const en = {
 
   // Repayment
   "repayment.title": "Record payment",
+  "repayment.editTitle": "Edit payment",
+  "repayment.delete": "Delete payment",
+  "repayment.deleteBody": "Balances will be recalculated without it.",
   "repayment.whoPaid": "Who paid",
   "repayment.toWhom": "To whom",
   "repayment.note": "Note (optional)",

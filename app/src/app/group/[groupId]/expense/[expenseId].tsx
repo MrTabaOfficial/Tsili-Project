@@ -75,6 +75,12 @@ export default function ExpenseScreen() {
             />
           ))}
       </Section>
+      <Button
+        title={t("expense.edit")}
+        icon="create-outline"
+        variant="secondary"
+        onPress={() => router.push({ pathname: "/group/[groupId]/add-expense", params: { groupId, expenseId } })}
+      />
       <Button title={t("expense.delete")} icon="trash-outline" variant="danger" onPress={confirmDelete} />
     </Screen>
   );

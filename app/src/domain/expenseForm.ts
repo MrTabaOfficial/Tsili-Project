@@ -26,6 +26,34 @@ export function emptySplitInputs(memberIds: string[]): SplitInputs {
   };
 }
 
+/** The reverse of resolveSplit, for editing: form state that reproduces a stored rule. */
+export function inputsFromRule(rule: SplitRule, memberIds: string[]): SplitInputs {
+  const base = emptySplitInputs(memberIds);
+  switch (rule.kind) {
+    case "equal":
+      return { ...base, mode: "equal", participants: new Set(rule.memberIds) };
+    case "exact":
+      return {
+        ...base,
+        mode: "exact",
+        exactText: Object.fromEntries(Object.entries(rule.amounts).map(([id, tetri]) => [id, tetriToText(tetri)])),
+      };
+    case "shares":
+      return {
+        ...base,
+        mode: "shares",
+        sharesText: Object.fromEntries(memberIds.map((id) => [id, String(rule.weights[id] ?? 0)])),
+      };
+  }
+}
+
+/** 1250 -> "12.50", the plain decimal the amount fields use. */
+export function tetriToText(tetri: number): string {
+  const sign = tetri < 0 ? "-" : "";
+  const abs = Math.abs(tetri);
+  return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;
+}
+
 /** Turns form state into a split rule and resolved shares, or a message the form can show. */
 export function resolveSplit(amount: number, inputs: SplitInputs): SplitResult {
   try {

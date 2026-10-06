@@ -1,14 +1,22 @@
 import { dateOnlySchema, MoneyError, parseTetri, type Expense } from "@tsili/shared";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { notifyDbChanged } from "../../../db/changes";
 import { useDb } from "../../../db/DbProvider";
-import { upsertExpense } from "../../../db/repo/expenses";
+import { getExpense, upsertExpense } from "../../../db/repo/expenses";
 import { getGroup } from "../../../db/repo/groups";
 import { listMembers } from "../../../db/repo/members";
 import { useQuery } from "../../../db/useQuery";
-import { emptySplitInputs, exactTotal, resolveSplit, type SplitInputs, type SplitMode } from "../../../domain/expenseForm";
+import {
+  emptySplitInputs,
+  exactTotal,
+  inputsFromRule,
+  resolveSplit,
+  tetriToText,
+  type SplitInputs,
+  type SplitMode,
+} from "../../../domain/expenseForm";
 import { formatMoney, localIsoDate } from "../../../lib/format";
 import { newId, nowIso } from "../../../lib/ids";
 import { useLocale, useT } from "../../../settings/SettingsProvider";
@@ -21,8 +29,11 @@ import { SegmentedControl, type Segment } from "../../../ui/SegmentedControl";
 import { Text } from "../../../ui/Text";
 import { TextField } from "../../../ui/TextField";
 
+type Params = { groupId: string; expenseId?: string };
+
+/** Adds a new expense, or edits an existing one when `expenseId` is given. */
 export default function AddExpenseScreen() {
-  const { groupId } = useLocalSearchParams<{ groupId: string }>();
+  const { groupId, expenseId } = useLocalSearchParams<Params>();
   const db = useDb();
   const router = useRouter();
   const t = useT();
@@ -30,7 +41,9 @@ export default function AddExpenseScreen() {
   const p = usePalette();
   const group = useQuery((d) => getGroup(d, groupId), [groupId]);
   const members = useQuery((d) => listMembers(d, groupId), [groupId]);
+  const existing = useQuery((d) => (expenseId ? getExpense(d, expenseId) : Promise.resolve(null)), [expenseId]);
   const currency = group.data?.currency ?? "GEL";
+  const editing = Boolean(expenseId);
 
   const [description, setDescription] = useState("");
   const [amountText, setAmountText] = useState("");
@@ -40,13 +53,23 @@ export default function AddExpenseScreen() {
   const [submitted, setSubmitted] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Participants default to everyone; the payer defaults to this phone's user.
+  // Fill the form once members (and, when editing, the expense) are known.
   useEffect(() => {
-    if (members.data && splitInputs === null) {
-      setSplitInputs(emptySplitInputs(members.data.map((m) => m.id)));
+    if (!members.data || splitInputs !== null) return;
+    if (editing && existing.loading) return;
+    const memberIds = members.data.map((m) => m.id);
+    const e = existing.data;
+    if (e) {
+      setDescription(e.description);
+      setAmountText(tetriToText(e.amount));
+      setPayerId(e.payerMemberId);
+      setDate(e.date);
+      setSplitInputs(inputsFromRule(e.splitRule, memberIds));
+    } else {
+      setSplitInputs(emptySplitInputs(memberIds));
       setPayerId((id) => id ?? group.data?.myMemberId ?? members.data?.[0]?.id ?? null);
     }
-  }, [members.data, splitInputs, group.data]);
+  }, [members.data, splitInputs, editing, existing.loading, existing.data, group.data]);
 
   const amount = useMemo(() => {
     try {
@@ -90,7 +113,7 @@ export default function AddExpenseScreen() {
     }
     const now = nowIso();
     const expense: Expense = {
-      id: newId(),
+      id: existing.data?.id ?? newId(),
       groupId,
       payerMemberId: payerId,
       amount,
@@ -98,7 +121,7 @@ export default function AddExpenseScreen() {
       date,
       splitRule: resolved.rule,
       shares: resolved.shares,
-      createdAt: now,
+      createdAt: existing.data?.createdAt ?? now,
       updatedAt: now,
       deletedAt: null,
     };
@@ -112,12 +135,13 @@ export default function AddExpenseScreen() {
 
   return (
     <Screen>
+      <Stack.Screen options={{ title: editing ? t("expense.editTitle") : t("expense.title") }} />
       <TextField
         label={t("expense.description")}
         value={description}
         onChangeText={setDescription}
         placeholder={t("expense.descriptionPlaceholder")}
-        autoFocus
+        autoFocus={!editing}
         error={descriptionError}
       />
       <TextField
@@ -205,7 +229,7 @@ export default function AddExpenseScreen() {
         <Text variant="muted">{t(preview.errorKey)}</Text>
       ) : null}
 
-      <Button title={t("expense.save")} icon="checkmark" onPress={() => void save()} />
+      <Button title={editing ? t("expense.saveChanges") : t("expense.save")} icon="checkmark" onPress={() => void save()} />
     </Screen>
   );
 }

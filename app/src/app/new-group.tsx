@@ -45,6 +45,7 @@ export default function NewGroupScreen() {
     <Screen>
       <TextField label={t("newGroup.name")} value={name} onChangeText={setName} placeholder={t("newGroup.namePlaceholder")} autoFocus error={nameError} />
       <TextField label={t("newGroup.yourName")} value={yourName} onChangeText={setYourName} placeholder="Luka" error={yourNameError} />
+      <Text variant="caption">{t("newGroup.yourNameHint")}</Text>
       <Text variant="muted">{t("newGroup.currencyNote")}</Text>
       <Button title={saving ? t("newGroup.saving") : t("newGroup.create")} icon="checkmark" onPress={() => void save()} disabled={saving} />
     </Screen>

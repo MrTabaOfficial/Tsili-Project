@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptySplitInputs, exactTotal, resolveSplit } from "./expenseForm";
+import { emptySplitInputs, exactTotal, inputsFromRule, resolveSplit, tetriToText } from "./expenseForm";
 
 const A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -43,6 +43,24 @@ describe("resolveSplit", () => {
     expect(resolveSplit(90, inputs)).toEqual({ ok: false, errorKey: "split.error.wholeShares" });
     inputs.sharesText = { [A]: "0", [B]: "0" };
     expect(resolveSplit(90, inputs)).toEqual({ ok: false, errorKey: "split.error.noShares" });
+  });
+});
+
+describe("inputsFromRule", () => {
+  it("round-trips every rule kind through the form", () => {
+    const members = [A, B, C];
+    const equal = { kind: "equal" as const, memberIds: [A, C] };
+    expect(resolveSplit(100, inputsFromRule(equal, members))).toMatchObject({ ok: true, rule: equal });
+    const exact = { kind: "exact" as const, amounts: { [A]: 1250, [B]: 8750 } };
+    expect(resolveSplit(10000, inputsFromRule(exact, members))).toMatchObject({ ok: true, rule: exact });
+    const shares = { kind: "shares" as const, weights: { [A]: 2, [B]: 1 } };
+    expect(resolveSplit(90, inputsFromRule(shares, members))).toMatchObject({ ok: true, shares: { [A]: 60, [B]: 30 } });
+  });
+
+  it("formats tetri as plain decimals", () => {
+    expect(tetriToText(1250)).toBe("12.50");
+    expect(tetriToText(5)).toBe("0.05");
+    expect(tetriToText(0)).toBe("0.00");
   });
 });
 
