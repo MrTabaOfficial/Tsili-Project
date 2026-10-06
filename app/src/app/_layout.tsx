@@ -1,6 +1,8 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as SystemUI from "expo-system-ui";
+import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "../auth/AuthProvider";
 import { DbProvider } from "../db/DbProvider";
@@ -29,6 +31,11 @@ function Shell() {
   const p = usePalette();
   const scheme = useScheme();
   const t = useT();
+  // The native root view sits under every screen and shows through during transitions; app.json can only
+  // give it one static colour, so it is recoloured here whenever the theme resolves.
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(p.background);
+  }, [p.background]);
   // The navigator paints its theme background under screens while they animate; without this it is white.
   const base = scheme === "dark" ? DarkTheme : DefaultTheme;
   const navTheme = {
