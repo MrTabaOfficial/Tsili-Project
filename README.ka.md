@@ -2,6 +2,8 @@
 
 [English](README.md) · ქართული
 
+[![CI](https://github.com/MrTabaOfficial/Tsili-Project/actions/workflows/ci.yml/badge.svg)](https://github.com/MrTabaOfficial/Tsili-Project/actions/workflows/ci.yml)
+
 Tsili (წილი) საერთო ხარჯების გასაყოფი აპლიკაციაა მოგზაურობისთვის ან საერთო ბინისთვის. ყველა იწერს, რა გადაიხადა, აპი ითვლის, ვინ ვის რამდენი უნდა მისცეს, და გთავაზობს უმცირეს რაოდენობის გადახდებს, რომლებიც ყველაფერს ასწორებს. მუშაობს სრულად ოფლაინ და ტელეფონებს შორის სინქრონიზდება, როცა კავშირი არის.
 
 ## შესაძლებლობები

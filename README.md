@@ -2,6 +2,8 @@
 
 English · [ქართული](README.ka.md)
 
+[![CI](https://github.com/MrTabaOfficial/Tsili-Project/actions/workflows/ci.yml/badge.svg)](https://github.com/MrTabaOfficial/Tsili-Project/actions/workflows/ci.yml)
+
 Tsili (წილი, "share" in Georgian) splits shared expenses for a trip or a shared flat. Everyone enters what they paid, the app works out who owes whom, and suggests the fewest payments that settle everything. It works fully offline and syncs between phones when there is a connection.
 
 ## Features

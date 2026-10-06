@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: tsili
+          POSTGRES_PASSWORD: tsili
+          POSTGRES_DB: tsili_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tsili -d tsili_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      CI: true
+      # prisma.config.ts reads DATABASE_URL even for `prisma generate`; the server tests use DATABASE_URL_TEST.
+      DATABASE_URL: postgresql://tsili:tsili@localhost:5432/tsili_test
+      DATABASE_URL_TEST: postgresql://tsili:tsili@localhost:5432/tsili_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test shared
+        run: npm test -w shared
+
+      - name: Test server
+        run: npm test -w server
+
+      - name: Test app
+        run: npm test -w app
+
+      - name: Bundle app for Android
+        run: npm run bundle:check -w app
