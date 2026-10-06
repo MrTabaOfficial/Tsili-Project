@@ -158,12 +158,16 @@ export default function AddExpenseScreen() {
       </View>
 
       <Section title={t("expense.paidBy")}>
+        <Text variant="caption">{t("expense.paidByHint")}</Text>
         <Chips options={memberOptions} selected={new Set(payerId ? [payerId] : [])} onToggle={setPayerId} />
         {payerError ? <Text style={{ color: p.danger }}>{payerError}</Text> : null}
       </Section>
 
       <Section title={t("expense.split")}>
         <SegmentedControl segments={modes} value={splitInputs?.mode ?? "equal"} onChange={(id) => update({ mode: id })} />
+        <Text variant="caption">
+          {splitInputs?.mode === "exact" ? t("expense.split.exactHint") : splitInputs?.mode === "shares" ? t("expense.split.sharesHint") : t("expense.split.equalHint")}
+        </Text>
         {splitInputs?.mode === "equal" ? (
           <Chips
             options={memberOptions}
