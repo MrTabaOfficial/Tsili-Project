@@ -61,7 +61,7 @@ export default function AccountScreen() {
 
 type Mode = "signIn" | "register";
 
-function AuthForm() {
+export function AuthForm() {
   const auth = useAuth();
   const t = useT();
   const p = usePalette();

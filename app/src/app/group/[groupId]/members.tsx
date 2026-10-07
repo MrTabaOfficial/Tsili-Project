@@ -7,6 +7,7 @@ import { deleteGroup, getGroup, renameGroup } from "../../../db/repo/groups";
 import { deleteMember, listMembers } from "../../../db/repo/members";
 import { useQuery } from "../../../db/useQuery";
 import { nowIso } from "../../../lib/ids";
+import { inviteLink } from "../../../lib/links";
 import { useT } from "../../../settings/SettingsProvider";
 import { radius, spacing, usePalette } from "../../../theme";
 import { Avatar } from "../../../ui/Avatar";
@@ -41,7 +42,9 @@ export default function GroupSettingsScreen() {
   async function shareCode() {
     if (!group.data?.inviteCode) return;
     try {
-      await Share.share({ message: t("members.shareMessage", { name: group.data.name, code: group.data.inviteCode }) });
+      await Share.share({
+        message: t("members.shareMessage", { name: group.data.name, code: group.data.inviteCode, link: inviteLink(group.data.inviteCode) }),
+      });
     } catch {
       // The platform has no share sheet (web without navigator.share); the code is visible on screen anyway.
     }

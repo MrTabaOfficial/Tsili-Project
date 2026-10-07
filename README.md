@@ -8,7 +8,7 @@ Tsili (წილი, "share" in Georgian) splits shared expenses for a trip or a
 
 ## Features
 
-- **Groups** for a trip or a flat, with members added by name. Others join with an eight-character invite code and claim their name.
+- **Groups** for a trip or a flat, with members added by name. Others join with an eight-character invite code, or tap an invite link that opens the app on the join screen with the code filled in.
 - **Expenses** with who paid, the amount, a description and a date. Three ways to divide: equally, by exact amounts, or by shares (a couple as 2, a single person as 1).
 - **Balances** per member, recomputed from the records every time, with a summary card that tells you at a glance whether you are owed money or owe it.
 - **Settle up** with the fewest payments that clear every balance, and one tap to record a payment when it happens.
@@ -156,6 +156,6 @@ npm run bundle:check -w app   # Metro bundle for Android; catches import and con
 
 ## Status
 
-Everything above is implemented and tested, and CI runs it on every push. Next steps, roughly in order: invite links that open the app directly, a native date picker, and pagination of the sync pull for very large groups.
+Everything above is implemented and tested, and CI runs it on every push. Next steps: a native date picker, and pagination of the sync pull for very large groups.
 
 Known limits kept on purpose for now: conflicts are resolved by device clock, one currency per group, and the web build used for automated checks cannot survive a same-tab reload because expo-sqlite's web storage holds an exclusive lock.

@@ -1,8 +1,9 @@
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { inviteCodeSchema, type GroupWithMembers, type InvitePreview } from "@tsili/shared";
 import { apiFetch, ApiRequestError } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
+import { AuthForm } from "./account";
 import { notifyDbChanged } from "../db/changes";
 import { useDb } from "../db/DbProvider";
 import { useT } from "../settings/SettingsProvider";
@@ -16,6 +17,7 @@ import { Section } from "../ui/Section";
 import { Text } from "../ui/Text";
 import { TextField } from "../ui/TextField";
 
+/** Reached from the groups screen or from an invite link (tsili://join?code=...). */
 export default function JoinScreen() {
   const db = useDb();
   const auth = useAuth();
@@ -23,23 +25,33 @@ export default function JoinScreen() {
   const router = useRouter();
   const t = useT();
   const p = usePalette();
-  const [code, setCode] = useState("");
+  const params = useLocalSearchParams<{ code?: string }>();
+  const [code, setCode] = useState(params.code ?? "");
+  const [autoLookedUp, setAutoLookedUp] = useState(false);
   const [preview, setPreview] = useState<InvitePreview | null>(null);
   const [memberId, setMemberId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const normalized = code.trim().toUpperCase();
+
+  // A code that arrived in the link is looked up as soon as the user is signed in.
+  useEffect(() => {
+    if (auth.status === "signedIn" && params.code && !autoLookedUp) {
+      setAutoLookedUp(true);
+      void lookUp();
+    }
+  });
+
   if (auth.status !== "signedIn") {
     return (
       <Screen>
         <Text>{t("join.signInFirst")}</Text>
-        <Button title={t("join.goToSettings")} icon="person-circle-outline" onPress={() => router.replace("/account")} />
+        <AuthForm />
       </Screen>
     );
   }
-
-  const normalized = code.trim().toUpperCase();
 
   function describe(err: unknown): string {
     if (err instanceof ApiRequestError) return err.code === "NETWORK" ? t("join.serverUnreachable") : err.message;

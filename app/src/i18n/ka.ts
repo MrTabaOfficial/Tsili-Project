@@ -76,7 +76,7 @@ export const ka: Record<TranslationKey, string> = {
   "members.inviteHint": "სხვები მას „კოდით შეერთებაში“ შეიყვანენ.",
   "members.noInviteYet": "შედი ანგარიშში და დასინქრონდი, რომ ამ ჯგუფისთვის მოსაწვევი კოდი მიიღო.",
   "members.share": "კოდის გაზიარება",
-  "members.shareMessage": "შემოუერთდი ჩემს ჯგუფს „{name}“ Tsili-ში კოდით {code}",
+  "members.shareMessage": "შემოუერთდი ჩემს ჯგუფს „{name}“ Tsili-ში: {link} (კოდი {code})",
   "members.section": "წევრები",
   "members.add": "წევრის დამატება",
   "members.joined": "შემოუერთდა საკუთარი ანგარიშით",
@@ -172,7 +172,7 @@ export const ka: Record<TranslationKey, string> = {
   "settings.hoursAgo": "{n} სთ წინ",
 
   "join.title": "ჯგუფში შეერთება",
-  "join.signInFirst": "ჯერ შედი ანგარიშში, რომ ჯგუფმა იცოდეს, ვინ ხარ.",
+  "join.signInFirst": "ჯერ შედი ანგარიშში, რომ ჯგუფმა იცოდეს, ვინ ხარ. კოდი შევსებული რჩება.",
   "join.goToSettings": "ანგარიშზე გადასვლა",
   "join.code": "მოსაწვევი კოდი",
   "join.lookUp": "მოძებნა",

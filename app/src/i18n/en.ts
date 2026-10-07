@@ -76,7 +76,7 @@ export const en = {
   "members.inviteHint": "Others enter it under Join with code.",
   "members.noInviteYet": "Sign in and sync to get an invite code for this group.",
   "members.share": "Share invite code",
-  "members.shareMessage": "Join my group “{name}” in Tsili with the code {code}",
+  "members.shareMessage": "Join my group \u201c{name}\u201d in Tsili: {link} (code {code})",
   "members.section": "Members",
   "members.add": "Add member",
   "members.joined": "Joined with their account",
@@ -178,7 +178,7 @@ export const en = {
 
   // Join
   "join.title": "Join a group",
-  "join.signInFirst": "Sign in first so the group knows who you are.",
+  "join.signInFirst": "Sign in first so the group knows who you are. The code stays filled in.",
   "join.goToSettings": "Go to account",
   "join.code": "Invite code",
   "join.lookUp": "Look up",

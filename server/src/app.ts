@@ -10,6 +10,7 @@ import type { Db } from "./db.js";
 import type { Env } from "./env.js";
 import { errorHandler, notFoundHandler } from "./errors.js";
 import { groupsRouter } from "./groups/routes.js";
+import { invitePageRouter } from "./invites/page.js";
 import { GroupService } from "./groups/service.js";
 import { syncRouter } from "./sync/routes.js";
 import { SyncService } from "./sync/service.js";
@@ -37,6 +38,7 @@ export function createApp({ env, db, logger, now }: AppDeps): Express {
   app.get("/health", (_req, res) => {
     res.json({ ok: true });
   });
+  app.use(invitePageRouter());
   app.use(authRouter(auth, tokens, { rateLimitMax: env.AUTH_RATE_LIMIT_MAX }));
   app.use(groupsRouter(groups, tokens));
   app.use(syncRouter(sync, tokens));
