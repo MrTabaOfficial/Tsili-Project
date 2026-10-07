@@ -159,3 +159,7 @@ npm run bundle:check -w app   # Metro bundle for Android; catches import and con
 Everything above is implemented and tested, and CI runs it on every push. Next steps: a native date picker, and pagination of the sync pull for very large groups.
 
 Known limits kept on purpose for now: conflicts are resolved by device clock, one currency per group, and the web build used for automated checks cannot survive a same-tab reload because expo-sqlite's web storage holds an exclusive lock.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
