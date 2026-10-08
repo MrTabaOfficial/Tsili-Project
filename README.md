@@ -1,165 +1,510 @@
-# Tsili
+<h1 align="center">Tsili</h1>
 
-English · [ქართული](README.ka.md)
+<p align="center">
+  A mobile app that splits shared expenses for a trip or a flat, works offline, and syncs between phones.
+</p>
 
-[![CI](https://github.com/MrTabaOfficial/Tsili-Project/actions/workflows/ci.yml/badge.svg)](https://github.com/MrTabaOfficial/Tsili-Project/actions/workflows/ci.yml)
+<p align="center">
+  <img alt="TypeScript 5.9" src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white">
+  <img alt="Expo SDK 57" src="https://img.shields.io/badge/Expo-SDK%2057-000020?logo=expo&logoColor=white">
+  <img alt="React Native 0.86" src="https://img.shields.io/badge/React%20Native-0.86-61DAFB?logo=react&logoColor=black">
+  <img alt="Express 5" src="https://img.shields.io/badge/Express-5.2-000000?logo=express&logoColor=white">
+  <img alt="Prisma 7" src="https://img.shields.io/badge/Prisma-7.10-2D3748?logo=prisma&logoColor=white">
+  <img alt="PostgreSQL 17" src="https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white">
+  <img alt="SQLite on device" src="https://img.shields.io/badge/SQLite-on%20device-003B57?logo=sqlite&logoColor=white">
+  <img alt="Vitest 5" src="https://img.shields.io/badge/Vitest-5.0-6E9F18?logo=vitest&logoColor=white">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green"></a>
+  <a href="https://github.com/MrTabaOfficial/Tsili-Project/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/MrTabaOfficial/Tsili-Project/actions/workflows/ci.yml/badge.svg"></a>
+</p>
 
-Tsili (წილი, "share" in Georgian) splits shared expenses for a trip or a shared flat. Everyone enters what they paid, the app works out who owes whom, and suggests the fewest payments that settle everything. It works fully offline and syncs between phones when there is a connection.
+<p align="center">English · <a href="README.ka.md">ქართული</a></p>
+
+<p align="center">
+  <img src="docs/screenshots/ledger.png" width="320" alt="A group in Tsili: what you owe, each member's balance and the payments that settle the group">
+</p>
+
+## About
+
+Tsili (წილი, "share" in Georgian) is for friends on a trip or flatmates who pay for things on each other's behalf. Each person records what they paid and who it was for. The app keeps a balance per person and proposes a short list of payments that brings everyone to zero. Everything works on the phone without a connection. When a member signs in, their groups sync with the other members' phones through a small API.
+
+I built it as a portfolio project to practise the parts of an app like this that are easy to get wrong. Money is stored as whole tetri and split with a deterministic rule, so every phone and the server reach the same numbers. The phone keeps its own SQLite database and pushes changes later, with a newer-edit-wins rule for conflicts. Sign-in uses short-lived access tokens with rotating refresh tokens. The app is translated into Georgian, including the case endings names take inside a sentence.
+
+> **Note.** This is a portfolio project. There is no hosted backend and the app is not in the stores; you run the server and the app yourself. The people and amounts in the screenshots are sample data.
+
+## Contents
+
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Use case diagram](#use-case-diagram)
+- [Database](#database)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Setup](#setup)
+- [Routes and API](#routes-and-api)
+- [Security](#security)
+- [Credits](#credits)
+- [License](#license)
 
 ## Features
 
-- **Groups** for a trip or a flat, with members added by name. Others join with an eight-character invite code, or tap an invite link that opens the app on the join screen with the code filled in.
-- **Expenses** with who paid, the amount, a description and a date. Three ways to divide: equally, by exact amounts, or by shares (a couple as 2, a single person as 1).
-- **Balances** per member, recomputed from the records every time, with a summary card that tells you at a glance whether you are owed money or owe it.
-- **Settle up** with the fewest payments that clear every balance, and one tap to record a payment when it happens.
-- **Repayments** ("Nino paid Luka 40 GEL") recorded alongside expenses; everything can be edited or deleted later.
-- **Offline first.** Every screen works without a server. Sign in to sync between phones; changes made offline are pushed when you are back online.
-- **English and Georgian**, light and dark, following the device by default. Amounts and dates are formatted per language.
+**Groups and members**
 
-## Screens
+- Create a group for a trip or a flat and add the people in it by name, before any of them has the app.
+- Rename a group, remove a member who has not joined yet, or delete the group.
+- Share an eight-character invite code, or a link that opens the app on the join screen with the code filled in.
+- Join someone else's group with the code and pick which of the listed names is you, or join under a new name.
 
-<p>
-  <img src="docs/screenshots/groups-light.png" width="200" alt="Groups list with your balance on each card">
-  <img src="docs/screenshots/ledger-light.png" width="200" alt="Group ledger: summary card, balances per member, settle-up plan">
-  <img src="docs/screenshots/add-expense-light.png" width="200" alt="Adding an expense split by shares, with a live preview of what each person owes">
+**Expenses and payments**
+
+- Add an expense with a description, an amount, a date and the person who paid.
+- Divide it equally among chosen people, by exact amounts, or by shares (one person counts as 2, another as 1).
+- See what each person will owe before saving.
+- Open an expense to see its breakdown, then edit or delete it.
+- Record a payment from one member to another, with an optional note, and edit or delete it later.
+
+**Balances and settling up**
+
+- See at the top of a group whether you owe money or are owed it, and the group's total spending.
+- See every member's balance, recomputed from the records each time.
+- See a settle-up list of who should pay whom, and record one of those payments with one tap.
+- See your balance on each group's card in the groups list.
+
+**Account and sync**
+
+- Use every screen without an account or a connection; the data lives on the phone.
+- Create an account or sign in to sync your groups with other phones.
+- Sync runs after each change, when the app returns to the foreground, and on demand.
+- See when the last sync happened, how many changes are waiting, and any record the server refused.
+- A group reaches another phone through its invite code. Signing in on a new phone does not download your groups by itself yet; you enter the code there once.
+
+**Language and appearance**
+
+- Switch between English and Georgian, or follow the device language.
+- Switch between light and dark, or follow the device theme.
+- Amounts and dates are formatted for the chosen language. The lari sign (₾) shows in the browser build; the Android build currently writes "GEL 118.62".
+
+## Screenshots
+
+Captured from the app's web build at phone size, with sample data. The last image is the Android development build running on an emulator.
+
+<table>
+  <tr>
+    <th width="50%">Groups</th>
+    <th width="50%">Expenses and payments in a group</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/groups.png" alt="Groups list with your balance on each card"></td>
+    <td valign="top"><img src="docs/screenshots/ledger-expenses.png" alt="Lower part of a group: add buttons, expenses and recorded payments"></td>
+  </tr>
+  <tr>
+    <th>Add an expense, split by shares</th>
+    <th>Expense breakdown</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/add-expense.png" alt="Expense form with payer, split mode, share weights and a preview of what each person owes"></td>
+    <td valign="top"><img src="docs/screenshots/expense-detail.png" alt="One expense with each person's share, an edit button and a delete button"></td>
+  </tr>
+  <tr>
+    <th>Record a payment</th>
+    <th>Group settings and invite code</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/record-payment.png" alt="Payment form pre-filled from the settle-up list"></td>
+    <td valign="top"><img src="docs/screenshots/group-settings.png" alt="Group name, invite code with a share button, and the member list"></td>
+  </tr>
+  <tr>
+    <th>New group</th>
+    <th>A new, empty group</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/new-group.png" alt="Form for a new group: its name and your name in it"></td>
+    <td valign="top"><img src="docs/screenshots/group-empty.png" alt="Empty group with three getting-started steps"></td>
+  </tr>
+  <tr>
+    <th>Join with a code</th>
+    <th>Create an account</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/join.png" alt="Join screen showing the group and the names you can claim"></td>
+    <td valign="top"><img src="docs/screenshots/sign-in.png" alt="Account screen with the create-account form"></td>
+  </tr>
+  <tr>
+    <th>Account and sync status</th>
+    <th>Settings</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/account.png" alt="Signed-in account with sync status and a sync button"></td>
+    <td valign="top"><img src="docs/screenshots/settings.png" alt="Theme and language controls"></td>
+  </tr>
+  <tr>
+    <th>Georgian, dark theme</th>
+    <th>Invite link in a browser</th>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/ledger-dark-ka.png" alt="The same group in Georgian with the dark theme"></td>
+    <td valign="top"><img src="docs/screenshots/invite-page.png" alt="Web page served for an invite link, with the code and an Open in Tsili button"></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/screenshots/android.png" width="320" alt="The same group in the Android development build on an emulator, after signing in and syncing"><br>
+  <sub>Android development build on an emulator, after opening an invite link, signing in and syncing</sub>
 </p>
-<p>
-  <img src="docs/screenshots/ledger-dark-ka.png" width="200" alt="The ledger in Georgian and dark mode">
-  <img src="docs/screenshots/group-settings-dark-ka.png" width="200" alt="Group settings with the invite code and members">
-  <img src="docs/screenshots/settings-dark-ka.png" width="200" alt="Settings: theme and language">
-</p>
 
-## How it works
+## Use case diagram
 
-### One source of truth for money
+```mermaid
+flowchart LR
+  anyone(["Person using the app"])
+  member(["Signed-in member"])
+  invited(["Invited person"])
 
-All amounts are whole numbers of tetri (1 GEL = 100 tetri). Decimal text exists only at the edges: user input is parsed with string arithmetic, so "0.29" becomes 29 rather than 28.999, and output is formatted per locale. The splitting, balance and settle-up logic lives in one shared package that both the phone and the server run. The server can therefore verify what phones send by recomputing it, and every phone arrives at the same numbers.
+  subgraph Tsili
+    createGroup["Create a group and add members"]
+    expenses["Add, edit and delete expenses"]
+    payments["Record, edit and delete payments"]
+    balances["See balances and the settle-up list"]
+    prefs["Change language and theme"]
+    account["Create an account and sign in"]
+    sync["Sync groups between phones"]
+    share["Share an invite code or link"]
+    openLink["Open an invite link"]
+    join["Join a group and claim a name"]
+  end
 
-### Splitting and leftover tetri
+  anyone --> createGroup
+  anyone --> expenses
+  anyone --> payments
+  anyone --> balances
+  anyone --> prefs
+  anyone --> account
+  member --> sync
+  member --> share
+  member --> join
+  invited --> openLink
+  invited --> account
+  openLink -.-> join
+```
 
-When an amount does not divide evenly, someone has to carry the extra tetri. 100 tetri three ways is 34, 33, 33. The rule is largest remainder: each person gets the floor of their exact share, and the leftover tetri go one by one to the largest fractional parts. Ties are broken by member id, so the result does not depend on the order people were added or on which phone did the maths. Shares always sum to the amount exactly, and nobody is ever more than one tetri from their true share.
+Someone without an account can do everything that stays on their own phone. Signing in adds sync, invite codes and joining.
 
-### Settle-up
+## Database
 
-Each member's net balance is computed first: positive means the group owes them, negative means they owe the group, and the balances always sum to zero. The plan is then greedy: any debtor who owes exactly what some creditor is owed gets paired with one payment, then the largest remaining debtor pays the largest remaining creditor until nothing is left. This never needs more payments than members with a non-zero balance minus one. Finding the absolute minimum is NP-hard, and for a group of friends the greedy plan is the right trade.
+The server stores everything in PostgreSQL through Prisma.
 
-### Offline storage and sync
+```mermaid
+erDiagram
+  User ||--o{ RefreshToken : "has"
+  User |o--o{ Member : "claims"
+  Group ||--o{ Member : "has"
+  Group ||--o{ Expense : "has"
+  Group ||--o{ Repayment : "has"
+  Member ||--o{ Expense : "paid"
+  Member ||--o{ Repayment : "paid from"
+  Member ||--o{ Repayment : "paid to"
 
-Every record carries a client-generated UUID, `createdAt`, `updatedAt` and `deletedAt`. Deleting marks the row rather than removing it, so other phones can learn that it is gone. On the phone, each changed row is flagged as dirty; that flag is the whole push queue.
+  User {
+    uuid id PK
+    text email UK
+    text passwordHash
+    text displayName
+    timestamp createdAt
+    timestamp updatedAt
+  }
+  RefreshToken {
+    uuid id PK
+    text tokenHash UK
+    uuid userId FK
+    uuid familyId
+    timestamp expiresAt
+    timestamp createdAt
+    timestamp revokedAt
+  }
+  Group {
+    uuid id PK
+    text name
+    text currency
+    text inviteCode UK
+    timestamp createdAt
+    timestamp updatedAt
+    timestamp deletedAt
+  }
+  Member {
+    uuid id PK
+    uuid groupId FK
+    text name
+    uuid userId FK
+    timestamp createdAt
+    timestamp updatedAt
+    timestamp deletedAt
+    bigint serverSeq
+  }
+  Expense {
+    uuid id PK
+    uuid groupId FK
+    uuid payerMemberId FK
+    bigint amount
+    text description
+    varchar date
+    jsonb splitRule
+    jsonb shares
+    timestamp createdAt
+    timestamp updatedAt
+    timestamp deletedAt
+    bigint serverSeq
+  }
+  Repayment {
+    uuid id PK
+    uuid groupId FK
+    uuid fromMemberId FK
+    uuid toMemberId FK
+    bigint amount
+    varchar date
+    text note
+    timestamp createdAt
+    timestamp updatedAt
+    timestamp deletedAt
+    bigint serverSeq
+  }
+```
 
-Sync is one request per group: the phone sends its dirty rows and the cursor it got last time, the server validates each record with the shared schemas (recomputing splits and rejecting shares that do not match), applies them with a newer-`updatedAt`-wins rule, and returns everything that changed since the cursor. A record that loses a conflict is not an error; the phone receives the server copy and converges. Rejected records are reported and stay queued on the phone rather than vanishing. Syncs for one group run one at a time under a PostgreSQL advisory lock, so a slow writer cannot commit behind a cursor that has already moved past it.
+A group has members, expenses and repayments; an expense is paid by one member and a repayment goes from one member to another; a member may be linked to a user account, and a user has refresh tokens. `Member.userId` is empty until someone joins and claims that name. Amounts are whole tetri. Rows are soft-deleted through `deletedAt` so other phones can learn about a deletion, and `serverSeq` comes from one PostgreSQL sequence that gives every synced write an order.
 
-### Members and accounts
-
-A group can be set up offline with names only. When someone installs the app and joins with the invite code, they pick the name that is theirs and claim it, so expenses already recorded against that name are theirs from that moment. The server owns the link between a member and an account; phones cannot push it.
-
-### Authentication
-
-Access tokens are short-lived signed JWTs. Refresh tokens are random, stored only as hashes, and rotated on every use; presenting an already-used one revokes that whole session, while other devices stay signed in. Passwords are hashed with Node's built-in scrypt. Login answers identically for an unknown email and a wrong password and still runs the hash either way, so timing reveals nothing. Credential endpoints are rate limited per client address.
-
-### Georgian with grammar
-
-"Nino pays Luka" is "ნინო უხდის ლუკას": the name changes form. The translation layer inflects names for the dative and ergative cases, and writes Latin-script names the way Georgian does, "Luka-ს". A test checks that every string exists in both languages with the same placeholders.
+The phone keeps the same four group tables in SQLite (`groups`, `members`, `expenses`, `repayments`), each with a `dirty` flag for rows not pushed yet, plus `sync_state` (the sync cursor per group) and `settings` (theme and language).
 
 ## Tech stack
 
-| Layer | Choices |
+| Layer | Technology |
 | --- | --- |
-| Monorepo | npm workspaces: `shared/`, `server/`, `app/` |
-| Shared | TypeScript, zod schemas (types are inferred from them) |
-| Server | Node, Express 5, PostgreSQL in Docker Compose, Prisma 7, JWT via jose, pino logging |
-| App | Expo SDK 57 (React Native), Expo Router, expo-sqlite, expo-secure-store, expo-localization |
-| Tests | Vitest everywhere: pure logic in `shared`, HTTP tests against a real PostgreSQL in `server`, the app's data layer and sync engine against Node's built-in SQLite |
-| UI checks | Headless Chrome against the Expo web build, used to click through flows and take the screenshots above |
+| Language | TypeScript 5.9 everywhere |
+| Monorepo | npm workspaces: `shared`, `server`, `app` |
+| Shared logic | zod 4 schemas; pure functions for splitting, balances and settle-up |
+| Mobile app | Expo SDK 57, React Native 0.86, React 19, Expo Router |
+| On-device storage | SQLite through expo-sqlite; tokens in expo-secure-store |
+| Server | Node.js, Express 5, pino logging, helmet |
+| Database | PostgreSQL 17 (Docker Compose), Prisma 7 with the pg driver adapter |
+| Authentication | JWT access tokens (jose) and rotating refresh tokens; scrypt from Node's crypto |
+| Tests | Vitest 5, supertest against a real PostgreSQL, Node's built-in SQLite for the app's data layer |
+| CI | GitHub Actions: typecheck, all tests, Android bundle |
 
-### Repository layout
+## Project structure
 
 ```
-tsili/
-├── shared/                  types, zod schemas and money logic used by both ends
-│   └── src/
-│       ├── money.ts         tetri type, error codes, deterministic id ordering
-│       ├── split.ts         equal / exact / shares, largest-remainder leftovers
-│       ├── balances.ts      net balance per member
-│       ├── settle.ts        greedy settle-up plan
-│       ├── domain.ts        Group, Member, Expense, Repayment schemas
-│       └── api.ts           request/response schemas and the sync protocol
+Tsili-Project/
+├── shared/src/                    code that both the app and the server import
+│   ├── money.ts                   tetri type, error codes, stable ordering of member ids
+│   ├── split.ts                   equal, exact and share splits; leftover tetri by largest remainder
+│   ├── balances.ts                net balance per member from expenses and repayments
+│   ├── settle.ts                  settle-up plan: exact matches first, then largest debtor to largest creditor
+│   ├── domain.ts                  zod schemas for Group, Member, Expense, Repayment
+│   ├── api.ts                     request and response schemas, including the sync protocol
+│   └── format.ts                  tetri to text and back without floating point
 ├── server/
-│   ├── prisma/              PostgreSQL schema and migrations
-│   ├── docker-compose.yml   PostgreSQL 17 with a separate test database
+│   ├── docker-compose.yml         PostgreSQL 17, plus a script that creates the test database
+│   ├── prisma/schema.prisma       tables; migrations sit next to it
+│   ├── .env.example               every environment variable the server reads
+│   ├── test/                      helpers: reset the database, register a test user
 │   └── src/
-│       ├── auth/            register, login, rotating refresh tokens
-│       ├── groups/          groups, members, invite codes
-│       ├── sync/            push/pull endpoint with the conflict rules
-│       ├── invites/         the invite link page
-│       ├── rateLimit.ts     per-address limiter for credential routes
-│       └── app.ts           Express app factory; index.ts reads env and listens
+│       ├── index.ts               reads the environment and starts listening
+│       ├── app.ts                 builds the Express app from its dependencies
+│       ├── env.ts                 validates the environment at startup
+│       ├── errors.ts              one error shape for every failure
+│       ├── rateLimit.ts           per-address limiter for the credential routes
+│       ├── auth/                  register, login, refresh, logout; password hashing; tokens
+│       ├── groups/                groups, members, invite codes, membership check
+│       ├── sync/                  the push and pull endpoint and its conflict rules
+│       └── invites/               the web page behind an invite link
 ├── app/
-│   ├── app.json             Expo config; eas.json holds build profiles
+│   ├── app.json, eas.json         Expo configuration and build profiles
+│   ├── metro.config.js            lets the web build load SQLite's wasm file
+│   ├── .env.example               the API address the app talks to
 │   └── src/
-│       ├── app/             screens, one file per route (Expo Router)
-│       ├── db/              SQLite schema, repositories, node:sqlite test adapter
-│       ├── domain/          expense form logic, ledger hook
-│       ├── sync/            sync engine and the provider that triggers it
-│       ├── auth/            token storage and AuthProvider
-│       ├── i18n/            en.ts, ka.ts and translate()
-│       ├── settings/        theme and language preferences
-│       ├── ui/              Button, ListRow, SegmentedControl, Chips, Avatar, ...
-│       └── theme.ts         palette, radii, type scale
-├── docs/screenshots/        images used in this README
-└── .github/workflows/       CI
+│       ├── app/                   screens, one file per route
+│       ├── db/                    SQLite schema and migrations, repositories, test adapter
+│       ├── domain/                expense form logic and the ledger for a group
+│       ├── sync/                  sync engine and the provider that triggers it
+│       ├── auth/                  token storage and the signed-in state
+│       ├── api/                   fetch wrapper with one retry after a token refresh
+│       ├── i18n/                  English and Georgian strings, name inflection
+│       ├── settings/              stored theme and language
+│       ├── ui/                    buttons, rows, chips, segmented control, avatar
+│       ├── lib/                   ids, dates, money formatting, invite links
+│       └── theme.ts               colours, radii, type scale
+├── docs/screenshots/              the images in this README
+└── .github/workflows/ci.yml       typecheck, tests and bundle on every push
 ```
 
-## How to run it
+Test files sit next to the code they test (`*.test.ts`).
 
-Prerequisites: Node 22 or newer, Docker, and Expo Go on a phone (or a simulator).
+## Setup
+
+**Requirements**
+
+- Node.js 24 or newer and npm
+- Docker, for PostgreSQL. Port 5432 must be free.
+- To run the app on Android: Android Studio with an emulator, or a device with USB debugging. The app also runs in a browser without any of that.
+
+**Steps**
+
+1. Clone the repository.
+
+   ```sh
+   git clone https://github.com/MrTabaOfficial/Tsili-Project.git
+   cd Tsili-Project
+   ```
+
+2. Create the server's environment file and put a secret in it. Do this before installing: the install step generates the Prisma client and reads `DATABASE_URL` from this file.
+
+   ```sh
+   cp server/.env.example server/.env
+   node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+   ```
+
+   Paste the printed value as `JWT_SECRET` in `server/.env`.
+
+3. Install the dependencies for all three workspaces.
+
+   ```sh
+   npm install
+   ```
+
+4. Start PostgreSQL. The first start also creates the `tsili_test` database that the tests use.
+
+   ```sh
+   npm run db:up -w server
+   ```
+
+5. Create the tables.
+
+   ```sh
+   npm run db:deploy -w server
+   ```
+
+6. Start the API. It listens on http://localhost:4000 and `GET /health` answers `{"ok":true}`.
+
+   ```sh
+   npm run dev -w server
+   ```
+
+7. Tell the app where the API is.
+
+   ```sh
+   cp app/.env.example app/.env
+   ```
+
+   Set `EXPO_PUBLIC_API_URL` in `app/.env` to `http://localhost:4000` for the browser, `http://10.0.2.2:4000` for the Android emulator, or `http://<your computer's LAN address>:4000` for a real phone on the same Wi-Fi.
+
+8. Run the app, in a second terminal.
+
+   ```sh
+   npm run web -w app            # in a browser
+   npm run android:dev -w app    # builds and installs the Android development build
+   ```
+
+   After the Android build is installed once, `npm run start -w app` is enough to start it again.
+
+**First login.** There are no seeded users. Open the account screen (the person icon on the groups screen), choose "Create account", and register with any email and a password of at least 8 characters. The app is also fully usable without an account.
+
+**Tests**
 
 ```sh
-npm install                      # installs all workspaces and generates the Prisma client
-```
-
-Server:
-
-```sh
-cp server/.env.example server/.env   # set JWT_SECRET to any string of 32+ characters
-npm run db:up -w server              # PostgreSQL in Docker
-npm run db:deploy -w server          # apply migrations
-npm run dev -w server                # http://localhost:4000
-```
-
-App:
-
-```sh
-cp app/.env.example app/.env         # set EXPO_PUBLIC_API_URL to your computer's LAN address, e.g. http://192.168.1.20:4000
-npm run start -w app                 # scan the QR code with Expo Go
-```
-
-The phone must be on the same Wi-Fi as the computer, and Windows Firewall must allow inbound connections on port 4000. The app does everything locally without the server; signing in enables sync and invite codes.
-
-### Development build
-
-Expo Go is enough to try the app, but it is a generic shell. A development build is Tsili's own native shell with exactly its modules compiled in, which is also what a release is made from. With the Android SDK and a JDK installed and a device or emulator connected:
-
-```sh
-npm run android:dev -w app       # compiles the native project and installs it, then start Metro as usual
-```
-
-The generated `android/` folder is a build artefact and is not committed. Without a local SDK, the same build runs in Expo's cloud: `npx eas-cli build --profile development --platform android` from `app/`, using the profiles in `app/eas.json`.
-
-Tests and checks:
-
-```sh
-npm test                      # shared, server (needs the Docker database), app
+npm test                      # shared, server and app; the server tests need the database from step 4
 npm run typecheck
-npm run bundle:check -w app   # Metro bundle for Android; catches import and config errors without a device
+npm run bundle:check -w app   # bundles the app for Android, to catch import and config errors
 ```
 
-## Status
+## Routes and API
 
-Everything above is implemented and tested, and CI runs it on every push. Next steps: a native date picker, and pagination of the sync pull for very large groups.
+All bodies are JSON. Errors have the shape `{ "error": { "code", "message", "issues?" } }`. "Member" means a signed-in user who belongs to that group; anyone else gets 404.
 
-Known limits kept on purpose for now: conflicts are resolved by device clock, one currency per group, and the web build used for automated checks cannot survive a same-tab reload because expo-sqlite's web storage holds an exclusive lock.
+| Method | Path | Access | Purpose |
+| --- | --- | --- | --- |
+| GET | `/health` | Public | Liveness check |
+| GET | `/i/:code` | Public | HTML page for an invite link, with a button that opens the app |
+| POST | `/auth/register` | Public, rate limited | Create an account; returns the user and a token pair |
+| POST | `/auth/login` | Public, rate limited | Sign in; returns the user and a token pair |
+| POST | `/auth/refresh` | Refresh token, rate limited | Exchange a refresh token for a new pair |
+| POST | `/auth/logout` | Refresh token | Revoke a refresh token |
+| GET | `/me` | Signed in | The current user |
+| POST | `/groups` | Signed in | Create a group; the creator becomes its first member |
+| GET | `/groups` | Signed in | The caller's groups with their members |
+| GET | `/groups/:groupId` | Member | One group with its members |
+| PATCH | `/groups/:groupId` | Member | Rename the group |
+| DELETE | `/groups/:groupId` | Member | Soft-delete the group |
+| POST | `/groups/:groupId/members` | Member | Add a member by name |
+| PATCH | `/groups/:groupId/members/:memberId` | Member | Rename a member |
+| DELETE | `/groups/:groupId/members/:memberId` | Member | Remove a member, unless another account has claimed it |
+| GET | `/invites/:code` | Signed in | Preview a group and its unclaimed names |
+| POST | `/invites/:code/join` | Signed in | Claim a name or join under a new one |
+| POST | `/groups/:groupId/sync` | Member | Push changed members, expenses and repayments; pull everything newer than a cursor |
+
+Expenses and repayments have no routes of their own. They are created on the phone and travel through the sync route.
+
+Screens in the app (Expo Router, files under `app/src/app`):
+
+| Route | Screen |
+| --- | --- |
+| `/` | Groups list |
+| `/new-group` | New group |
+| `/join` | Join with a code; also the target of `tsili://join?code=…` |
+| `/account` | Sign in, create an account, sync status, sign out |
+| `/settings` | Theme and language |
+| `/group/[groupId]` | Balances, settle-up list, expenses and payments |
+| `/group/[groupId]/members` | Group name, invite code, members, delete group |
+| `/group/[groupId]/add-member` | Add a member |
+| `/group/[groupId]/add-expense` | Add or edit an expense |
+| `/group/[groupId]/add-repayment` | Record or edit a payment |
+| `/group/[groupId]/expense/[expenseId]` | Expense breakdown |
+
+## Security
+
+What the code does today:
+
+- Passwords are hashed with scrypt and a random salt per password, and compared in constant time.
+- Login gives the same answer for an unknown email and a wrong password, and runs the hash in both cases.
+- Access tokens are HS256 JWTs that last 15 minutes; the verifier pins the algorithm and the issuer.
+- Refresh tokens are 32 random bytes, stored only as SHA-256 hashes, and replaced on every use. Presenting one that was already used revokes every token from that login.
+- Register and login are limited to 20 attempts per address per 15 minutes, refresh to 60.
+- Every request body and URL parameter is validated with zod before it is used.
+- Group routes check membership and answer 404 to non-members, so group ids cannot be probed.
+- The link between a member and an account can only be set by the join route; the sync route ignores it.
+- The server recomputes each pushed expense's split and refuses it if the stored shares differ. It also refuses records dated more than a day in the future and records that reference people outside the group.
+- helmet sets the usual security headers, JSON bodies are capped at 1 MB, and one sync request may carry at most 1000 records of each kind.
+- The server refuses to start if the environment is invalid, including a `JWT_SECRET` shorter than 32 characters.
+- On the phone, tokens are kept in the platform keystore through expo-secure-store.
+- `.env` files are ignored by git; only `.env.example` files with placeholders are committed.
+
+What to change before deploying it anywhere public:
+
+- Serve the API over HTTPS. The example configuration uses plain HTTP, which release builds on Android and iOS block by default.
+- Change the database password from the compose file's `tsili`, and do not publish port 5432 beyond the host.
+- Restrict CORS. It currently allows any origin, which is fine for a mobile client with bearer tokens and too open for a browser client.
+- Behind a reverse proxy, set Express's `trust proxy` so the rate limiter sees real client addresses. The limiter keeps its counters in memory, so it also needs a shared store if more than one instance runs.
+- There is no email verification, password reset or account deletion.
+- Used and expired refresh-token rows are never purged.
+- Any member can rename or delete a group; there are no roles.
+- In the browser build, tokens are kept in `localStorage`, because expo-secure-store has no web implementation.
+
+## Credits
+
+Tsili uses these open-source projects. There are no third-party templates or images; the screenshots are of the app itself and the icons come from Ionicons.
+
+| Project | Used for | License |
+| --- | --- | --- |
+| [Expo](https://expo.dev) and its modules (router, sqlite, secure-store, localization, crypto, dev-client, system-ui) | App framework and native APIs | MIT |
+| [React Native](https://reactnative.dev), [React](https://react.dev), [React Native Web](https://necolas.github.io/react-native-web/) | UI runtime | MIT |
+| [React Navigation](https://reactnavigation.org), react-native-screens, react-native-safe-area-context | Navigation | MIT |
+| [Ionicons](https://ionic.io/ionicons) through @expo/vector-icons | Icons | MIT |
+| [Express](https://expressjs.com), helmet, cors | HTTP server | MIT |
+| [Prisma](https://www.prisma.io) | Database client and migrations | Apache-2.0 |
+| [node-postgres](https://node-postgres.com) | PostgreSQL driver | MIT |
+| [PostgreSQL](https://www.postgresql.org) | Database | PostgreSQL License |
+| [zod](https://zod.dev) | Validation and types | MIT |
+| [jose](https://github.com/panva/jose) | JWT signing and verification | MIT |
+| [pino](https://getpino.io) | Logging | MIT |
+| [Vitest](https://vitest.dev), supertest, tsx | Tests and running TypeScript | MIT |
+| [TypeScript](https://www.typescriptlang.org) | Language | Apache-2.0 |
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+[MIT](LICENSE)
